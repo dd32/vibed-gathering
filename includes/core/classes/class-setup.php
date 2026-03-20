@@ -65,6 +65,7 @@ class Setup {
 		Event_Rest_Api::get_instance();
 		Email::get_instance();
 		Event_Setup::get_instance();
+		Event_Status::get_instance();
 		Geocoding::get_instance();
 		Group_Rest_Api::get_instance();
 		Group_Setup::get_instance();
