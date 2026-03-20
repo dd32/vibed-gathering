@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
 
 use GatherPress\Core\Traits\Singleton;
 use GatherPress\Core\Event_Setup;
+use GatherPress\Core\Group_Setup;
 use GatherPress\Core\Venue;
 use GatherPress\Core\Topic;
 /**
@@ -304,6 +305,18 @@ class General extends Base {
 							'options' => array(
 								'label'   => __( 'Permalink base of Topics.', 'gatherpress' ),
 								'default' => Topic::get_localized_taxonomy_slug(),
+							),
+						),
+					),
+					'groups' => array(
+						'labels' => array(
+							'name' => __( 'Groups', 'gatherpress' ),
+						),
+						'field'  => array(
+							'type'    => 'text',
+							'options' => array(
+								'label'   => __( 'Permalink base of Groups.', 'gatherpress' ),
+								'default' => Group_Setup::get_localized_post_type_slug(),
 							),
 						),
 					),

@@ -64,6 +64,8 @@ class Setup {
 		Event_Rest_Api::get_instance();
 		Event_Setup::get_instance();
 		Geocoding::get_instance();
+		Group_Rest_Api::get_instance();
+		Group_Setup::get_instance();
 		Export::get_instance();
 		Import::get_instance();
 		Rsvp_Cleanup::get_instance();
@@ -396,6 +398,7 @@ class Setup {
 		global $wpdb;
 
 		$tables[] = sprintf( Event::TABLE_FORMAT, $wpdb->prefix );
+		$tables[] = sprintf( Group::MEMBERSHIP_TABLE, $wpdb->prefix );
 
 		return $tables;
 	}
@@ -438,6 +441,9 @@ class Setup {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR.
 
 		dbDelta( $sql );
+
+		// Create group membership table.
+		Group_Setup::create_membership_table();
 
 		$this->add_online_event_term();
 		$this->schedule_rewrite_flush();
