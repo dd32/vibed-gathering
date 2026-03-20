@@ -2,8 +2,9 @@
 /**
  * Class responsible for representing and managing group instances.
  *
- * The Group class is responsible for creating and managing instances of groups within the GatherPress plugin.
- * It provides methods for working with group data, such as retrieving group details and managing membership.
+ * In the multisite architecture, each group is a WordPress site (blog).
+ * The Group class wraps a blog_id and provides methods for membership
+ * management, event queries, and group metadata.
  *
  * @package GatherPress\Core
  * @since 1.0.0
@@ -14,40 +15,18 @@ namespace GatherPress\Core;
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
 
-use WP_Post;
+use WP_User;
 
 /**
  * Class Group.
  *
- * Represents individual groups/chapters within the GatherPress plugin and provides group-related functionality.
+ * Represents a group (WordPress multisite site) within the GatherPress plugin.
+ * Each group is a site in the network, with membership managed via native
+ * WordPress multisite user roles.
  *
  * @since 1.0.0
  */
 class Group {
-	/**
-	 * The post type name for GatherPress groups.
-	 *
-	 * @since 1.0.0
-	 * @var string $POST_TYPE
-	 */
-	const POST_TYPE = 'gatherpress_group';
-
-	/**
-	 * The taxonomy name for associating events with groups.
-	 *
-	 * @since 1.0.0
-	 * @var string $TAXONOMY
-	 */
-	const TAXONOMY = '_gatherpress_group';
-
-	/**
-	 * Custom table name format for group membership.
-	 *
-	 * @since 1.0.0
-	 * @var string $MEMBERSHIP_TABLE
-	 */
-	const MEMBERSHIP_TABLE = '%sgatherpress_group_members';
-
 	/**
 	 * Group membership role: Organizer.
 	 *
@@ -62,7 +41,7 @@ class Group {
 	 * @since 1.0.0
 	 * @var string
 	 */
-	const ROLE_CO_ORGANIZER = 'co-organizer';
+	const ROLE_CO_ORGANIZER = 'co_organizer';
 
 	/**
 	 * Group membership role: Member.
@@ -73,57 +52,54 @@ class Group {
 	const ROLE_MEMBER = 'member';
 
 	/**
-	 * Group status: Active.
+	 * Blog option key for group status.
 	 *
 	 * @since 1.0.0
 	 * @var string
 	 */
-	const STATUS_ACTIVE = 'active';
+	const OPTION_STATUS = 'gatherpress_group_status';
 
 	/**
-	 * Group status: Inactive.
+	 * Blog option key for group location (JSON).
 	 *
 	 * @since 1.0.0
 	 * @var string
 	 */
-	const STATUS_INACTIVE = 'inactive';
+	const OPTION_LOCATION = 'gatherpress_group_location';
 
 	/**
-	 * Group status: Pending approval.
+	 * Blog option key for group type (in-person, online, hybrid).
 	 *
 	 * @since 1.0.0
 	 * @var string
 	 */
-	const STATUS_PENDING = 'pending';
+	const OPTION_TYPE = 'gatherpress_group_type';
 
 	/**
-	 * The group post object.
+	 * Blog option key for group links (JSON).
 	 *
 	 * @since 1.0.0
-	 * @var WP_Post|null
+	 * @var string
 	 */
-	protected ?WP_Post $group = null;
+	const OPTION_LINKS = 'gatherpress_group_links';
 
 	/**
-	 * The group post ID.
+	 * The blog ID representing this group.
 	 *
 	 * @since 1.0.0
 	 * @var int
 	 */
-	protected int $group_id = 0;
+	protected int $blog_id;
 
 	/**
 	 * Constructor for the Group class.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param int $post_id The post ID of the group.
+	 * @param int $blog_id The blog ID of the group site. Defaults to current blog.
 	 */
-	public function __construct( int $post_id ) {
-		if ( self::POST_TYPE === get_post_type( $post_id ) ) {
-			$this->group    = get_post( $post_id );
-			$this->group_id = $post_id;
-		}
+	public function __construct( int $blog_id = 0 ) {
+		$this->blog_id = $blog_id ? $blog_id : get_current_blog_id();
 	}
 
 	/**
@@ -131,32 +107,56 @@ class Group {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return bool True if the group instance is valid, false otherwise.
+	 * @return bool True if the group site exists, false otherwise.
 	 */
 	public function is_valid(): bool {
-		return $this->group instanceof WP_Post;
+		$blog = get_blog_details( $this->blog_id );
+
+		return ! empty( $blog ) && ! $blog->deleted && ! $blog->archived;
 	}
 
 	/**
-	 * Get the group post object.
+	 * Get the blog ID.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return WP_Post|null The group post object, or null if invalid.
+	 * @return int The blog ID.
 	 */
-	public function get_post(): ?WP_Post {
-		return $this->group;
+	public function get_blog_id(): int {
+		return $this->blog_id;
 	}
 
 	/**
-	 * Get the group post ID.
+	 * Get the group name (blog title).
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return int The group post ID.
+	 * @return string The group name.
 	 */
-	public function get_id(): int {
-		return $this->group_id;
+	public function get_name(): string {
+		return get_blog_option( $this->blog_id, 'blogname', '' );
+	}
+
+	/**
+	 * Get the group description (blog tagline).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The group description.
+	 */
+	public function get_description(): string {
+		return get_blog_option( $this->blog_id, 'blogdescription', '' );
+	}
+
+	/**
+	 * Get the group URL.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The group site URL.
+	 */
+	public function get_url(): string {
+		return get_blog_option( $this->blog_id, 'siteurl', '' );
 	}
 
 	/**
@@ -174,7 +174,7 @@ class Group {
 			'longitude' => 0.0,
 		);
 
-		$location = get_post_meta( $this->group_id, 'gatherpress_group_location', true );
+		$location = get_blog_option( $this->blog_id, self::OPTION_LOCATION, '' );
 
 		if ( empty( $location ) ) {
 			return $default;
@@ -190,6 +190,25 @@ class Group {
 	}
 
 	/**
+	 * Set the group location data.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array{city?: string, country?: string, latitude?: float, longitude?: float} $location The location data.
+	 * @return bool True on success, false on failure.
+	 */
+	public function set_location( array $location ): bool {
+		$current = $this->get_location();
+		$merged  = wp_parse_args( $location, $current );
+
+		return update_blog_option(
+			$this->blog_id,
+			self::OPTION_LOCATION,
+			wp_json_encode( $merged )
+		);
+	}
+
+	/**
 	 * Get the group type (in-person, online, hybrid).
 	 *
 	 * @since 1.0.0
@@ -197,9 +216,20 @@ class Group {
 	 * @return string The group type.
 	 */
 	public function get_type(): string {
-		$type = get_post_meta( $this->group_id, 'gatherpress_group_type', true );
+		$type = get_blog_option( $this->blog_id, self::OPTION_TYPE, 'in-person' );
 
 		return ! empty( $type ) ? $type : 'in-person';
+	}
+
+	/**
+	 * Get the group status (active, inactive, pending).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The group status.
+	 */
+	public function get_status(): string {
+		return get_blog_option( $this->blog_id, self::OPTION_STATUS, 'active' );
 	}
 
 	/**
@@ -210,21 +240,23 @@ class Group {
 	 * @return int The number of members.
 	 */
 	public function get_member_count(): int {
-		global $wpdb;
+		$count = wp_cache_get( 'member_count_' . $this->blog_id, GATHERPRESS_CACHE_GROUP );
 
-		$table = sprintf( self::MEMBERSHIP_TABLE, $wpdb->prefix );
+		if ( false !== $count ) {
+			return (int) $count;
+		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i WHERE group_id = %d AND status = %s', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder
-				$table,
-				$this->group_id,
-				'active'
+		$users = get_users(
+			array(
+				'blog_id' => $this->blog_id,
+				'fields'  => 'ID',
 			)
 		);
 
-		return (int) $count;
+		$count = count( $users );
+		wp_cache_set( 'member_count_' . $this->blog_id, $count, GATHERPRESS_CACHE_GROUP );
+
+		return $count;
 	}
 
 	/**
@@ -233,43 +265,24 @@ class Group {
 	 * @since 1.0.0
 	 *
 	 * @param string $role Optional. Filter by role. Default empty (all roles).
-	 * @param int    $limit Optional. Number of members to return. Default 50.
+	 * @param int    $number Optional. Number of members to return. Default 50.
 	 * @param int    $offset Optional. Offset for pagination. Default 0.
-	 * @return array<int, object> Array of member objects.
+	 * @return WP_User[] Array of WP_User objects.
 	 */
-	public function get_members( string $role = '', int $limit = 50, int $offset = 0 ): array {
-		global $wpdb;
-
-		$table = sprintf( self::MEMBERSHIP_TABLE, $wpdb->prefix );
+	public function get_members( string $role = '', int $number = 50, int $offset = 0 ): array {
+		$args = array(
+			'blog_id' => $this->blog_id,
+			'number'  => $number,
+			'offset'  => $offset,
+			'orderby' => 'registered',
+			'order'   => 'DESC',
+		);
 
 		if ( ! empty( $role ) ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$results = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT * FROM %i WHERE group_id = %d AND status = %s AND role = %s ORDER BY joined_at DESC LIMIT %d OFFSET %d', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder
-					$table,
-					$this->group_id,
-					'active',
-					$role,
-					$limit,
-					$offset
-				)
-			);
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$results = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT * FROM %i WHERE group_id = %d AND status = %s ORDER BY joined_at DESC LIMIT %d OFFSET %d', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder
-					$table,
-					$this->group_id,
-					'active',
-					$limit,
-					$offset
-				)
-			);
+			$args['role'] = $role;
 		}
 
-		return is_array( $results ) ? $results : array();
+		return get_users( $args );
 	}
 
 	/**
@@ -281,22 +294,7 @@ class Group {
 	 * @return bool True if the user is a member, false otherwise.
 	 */
 	public function is_member( int $user_id ): bool {
-		global $wpdb;
-
-		$table = sprintf( self::MEMBERSHIP_TABLE, $wpdb->prefix );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i WHERE group_id = %d AND user_id = %d AND status = %s', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder
-				$table,
-				$this->group_id,
-				$user_id,
-				'active'
-			)
-		);
-
-		return (int) $count > 0;
+		return is_user_member_of_blog( $user_id, $this->blog_id );
 	}
 
 	/**
@@ -308,22 +306,20 @@ class Group {
 	 * @return string|null The user's role, or null if not a member.
 	 */
 	public function get_member_role( int $user_id ): ?string {
-		global $wpdb;
+		if ( ! $this->is_member( $user_id ) ) {
+			return null;
+		}
 
-		$table = sprintf( self::MEMBERSHIP_TABLE, $wpdb->prefix );
+		switch_to_blog( $this->blog_id );
+		$user  = new WP_User( $user_id );
+		$roles = $user->roles;
+		restore_current_blog();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$role = $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT role FROM %i WHERE group_id = %d AND user_id = %d AND status = %s', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder
-				$table,
-				$this->group_id,
-				$user_id,
-				'active'
-			)
-		);
+		if ( empty( $roles ) ) {
+			return null;
+		}
 
-		return $role ? (string) $role : null;
+		return reset( $roles );
 	}
 
 	/**
@@ -336,48 +332,37 @@ class Group {
 	 * @return bool True on success, false on failure.
 	 */
 	public function add_member( int $user_id, string $role = self::ROLE_MEMBER ): bool {
-		global $wpdb;
-
 		if ( $this->is_member( $user_id ) ) {
 			return false;
 		}
 
-		$valid_roles = array( self::ROLE_ORGANIZER, self::ROLE_CO_ORGANIZER, self::ROLE_MEMBER );
-		if ( ! in_array( $role, $valid_roles, true ) ) {
+		if ( $this->is_banned( $user_id ) ) {
 			return false;
 		}
 
-		$table = sprintf( self::MEMBERSHIP_TABLE, $wpdb->prefix );
+		$result = add_user_to_blog( $this->blog_id, $user_id, $role );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'group_id'  => $this->group_id,
-				'user_id'   => $user_id,
-				'role'      => $role,
-				'status'    => 'active',
-				'joined_at' => current_time( 'mysql', true ),
-			),
-			array( '%d', '%d', '%s', '%s', '%s' )
-		);
-
-		if ( false !== $result ) {
-			wp_cache_delete( 'group_member_count_' . $this->group_id, GATHERPRESS_CACHE_GROUP );
-
-			/**
-			 * Fires after a user joins a group.
-			 *
-			 * @since 1.0.0
-			 *
-			 * @param int    $group_id The group post ID.
-			 * @param int    $user_id  The user ID.
-			 * @param string $role     The membership role.
-			 */
-			do_action( 'gatherpress_group_member_added', $this->group_id, $user_id, $role );
+		if ( is_wp_error( $result ) ) {
+			return false;
 		}
 
-		return false !== $result;
+		// Record when the user joined this group.
+		update_user_meta( $user_id, '_gatherpress_joined_' . $this->blog_id, current_time( 'mysql', true ) );
+
+		wp_cache_delete( 'member_count_' . $this->blog_id, GATHERPRESS_CACHE_GROUP );
+
+		/**
+		 * Fires after a user joins a group.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $blog_id The blog ID of the group.
+		 * @param int    $user_id The user ID.
+		 * @param string $role    The membership role.
+		 */
+		do_action( 'gatherpress_group_member_added', $this->blog_id, $user_id, $role );
+
+		return true;
 	}
 
 	/**
@@ -389,38 +374,26 @@ class Group {
 	 * @return bool True on success, false on failure.
 	 */
 	public function remove_member( int $user_id ): bool {
-		global $wpdb;
+		$result = remove_user_from_blog( $user_id, $this->blog_id );
 
-		$table = sprintf( self::MEMBERSHIP_TABLE, $wpdb->prefix );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$table,
-			array( 'status' => 'inactive' ),
-			array(
-				'group_id' => $this->group_id,
-				'user_id'  => $user_id,
-				'status'   => 'active',
-			),
-			array( '%s' ),
-			array( '%d', '%d', '%s' )
-		);
-
-		if ( false !== $result && $result > 0 ) {
-			wp_cache_delete( 'group_member_count_' . $this->group_id, GATHERPRESS_CACHE_GROUP );
-
-			/**
-			 * Fires after a user leaves a group.
-			 *
-			 * @since 1.0.0
-			 *
-			 * @param int $group_id The group post ID.
-			 * @param int $user_id  The user ID.
-			 */
-			do_action( 'gatherpress_group_member_removed', $this->group_id, $user_id );
+		if ( is_wp_error( $result ) ) {
+			return false;
 		}
 
-		return false !== $result && $result > 0;
+		delete_user_meta( $user_id, '_gatherpress_joined_' . $this->blog_id );
+		wp_cache_delete( 'member_count_' . $this->blog_id, GATHERPRESS_CACHE_GROUP );
+
+		/**
+		 * Fires after a user leaves a group.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $blog_id The blog ID of the group.
+		 * @param int $user_id The user ID.
+		 */
+		do_action( 'gatherpress_group_member_removed', $this->blog_id, $user_id );
+
+		return true;
 	}
 
 	/**
@@ -433,70 +406,123 @@ class Group {
 	 * @return bool True on success, false on failure.
 	 */
 	public function update_member_role( int $user_id, string $role ): bool {
-		global $wpdb;
-
-		$valid_roles = array( self::ROLE_ORGANIZER, self::ROLE_CO_ORGANIZER, self::ROLE_MEMBER );
+		$valid_roles = array_keys( self::get_roles() );
 		if ( ! in_array( $role, $valid_roles, true ) ) {
 			return false;
 		}
 
-		$table = sprintf( self::MEMBERSHIP_TABLE, $wpdb->prefix );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$table,
-			array( 'role' => $role ),
-			array(
-				'group_id' => $this->group_id,
-				'user_id'  => $user_id,
-				'status'   => 'active',
-			),
-			array( '%s' ),
-			array( '%d', '%d', '%s' )
-		);
-
-		if ( false !== $result && $result > 0 ) {
-			/**
-			 * Fires after a member's role is updated.
-			 *
-			 * @since 1.0.0
-			 *
-			 * @param int    $group_id The group post ID.
-			 * @param int    $user_id  The user ID.
-			 * @param string $role     The new role.
-			 */
-			do_action( 'gatherpress_group_member_role_updated', $this->group_id, $user_id, $role );
+		if ( ! $this->is_member( $user_id ) ) {
+			return false;
 		}
 
-		return false !== $result && $result > 0;
+		switch_to_blog( $this->blog_id );
+		$user = new WP_User( $user_id );
+		$user->set_role( $role );
+		restore_current_blog();
+
+		/**
+		 * Fires after a member's role is updated.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $blog_id The blog ID of the group.
+		 * @param int    $user_id The user ID.
+		 * @param string $role    The new role.
+		 */
+		do_action( 'gatherpress_group_member_role_updated', $this->blog_id, $user_id, $role );
+
+		return true;
+	}
+
+	/**
+	 * Ban a user from this group.
+	 *
+	 * Removes the user and sets a meta flag to prevent rejoin.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $user_id The user ID to ban.
+	 * @return bool True on success, false on failure.
+	 */
+	public function ban_member( int $user_id ): bool {
+		if ( $this->is_member( $user_id ) ) {
+			$this->remove_member( $user_id );
+		}
+
+		update_user_meta( $user_id, '_gatherpress_banned_' . $this->blog_id, 1 );
+
+		/**
+		 * Fires after a user is banned from a group.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $blog_id The blog ID of the group.
+		 * @param int $user_id The user ID.
+		 */
+		do_action( 'gatherpress_group_member_banned', $this->blog_id, $user_id );
+
+		return true;
+	}
+
+	/**
+	 * Unban a user from this group.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $user_id The user ID to unban.
+	 * @return bool True on success.
+	 */
+	public function unban_member( int $user_id ): bool {
+		delete_user_meta( $user_id, '_gatherpress_banned_' . $this->blog_id );
+
+		return true;
+	}
+
+	/**
+	 * Check if a user is banned from this group.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $user_id The user ID to check.
+	 * @return bool True if the user is banned, false otherwise.
+	 */
+	public function is_banned( int $user_id ): bool {
+		return (bool) get_user_meta( $user_id, '_gatherpress_banned_' . $this->blog_id, true );
+	}
+
+	/**
+	 * Check if a user can manage members in this group.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $user_id The user ID to check.
+	 * @return bool True if the user can manage members.
+	 */
+	public function can_manage_members( int $user_id ): bool {
+		if ( is_super_admin( $user_id ) ) {
+			return true;
+		}
+
+		return self::ROLE_ORGANIZER === $this->get_member_role( $user_id );
 	}
 
 	/**
 	 * Get the upcoming events for this group.
 	 *
+	 * Queries the group's site for upcoming GatherPress events.
+	 *
 	 * @since 1.0.0
 	 *
 	 * @param int $limit Optional. Number of events to return. Default 5.
-	 * @return array<int, WP_Post> Array of event posts.
+	 * @return array<int, array{id: int, title: string, permalink: string}> Array of event data.
 	 */
 	public function get_upcoming_events( int $limit = 5 ): array {
-		$term = get_term_by( 'slug', $this->get_group_term_slug(), self::TAXONOMY );
-
-		if ( ! is_a( $term, '\WP_Term' ) ) {
-			return array();
-		}
+		switch_to_blog( $this->blog_id );
 
 		$args = array(
 			'post_type'      => Event::POST_TYPE,
 			'posts_per_page' => $limit,
 			'post_status'    => 'publish',
-			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-				array(
-					'taxonomy' => self::TAXONOMY,
-					'field'    => 'term_id',
-					'terms'    => $term->term_id,
-				),
-			),
 			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				array(
 					'key'     => 'gatherpress_datetime_end',
@@ -510,28 +536,20 @@ class Group {
 			'order'          => 'ASC',
 		);
 
-		$query = new \WP_Query( $args );
+		$query  = new \WP_Query( $args );
+		$events = array();
 
-		return $query->posts;
-	}
-
-	/**
-	 * Get the group taxonomy term slug.
-	 *
-	 * Generates a prefixed slug for the group's taxonomy term,
-	 * following the same pattern as venues.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $slug Optional. The post slug. Defaults to the group's post_name.
-	 * @return string The taxonomy term slug.
-	 */
-	public function get_group_term_slug( string $slug = '' ): string {
-		if ( empty( $slug ) && $this->group instanceof WP_Post ) {
-			$slug = $this->group->post_name;
+		foreach ( $query->posts as $post ) {
+			$events[] = array(
+				'id'        => $post->ID,
+				'title'     => get_the_title( $post->ID ),
+				'permalink' => get_permalink( $post->ID ),
+			);
 		}
 
-		return '_group_' . $slug;
+		restore_current_blog();
+
+		return $events;
 	}
 
 	/**
@@ -547,5 +565,68 @@ class Group {
 			self::ROLE_CO_ORGANIZER => __( 'Co-Organizer', 'gatherpress' ),
 			self::ROLE_MEMBER       => __( 'Member', 'gatherpress' ),
 		);
+	}
+
+	/**
+	 * Get all group sites in the network.
+	 *
+	 * Returns sites that have GatherPress activated and are marked as group sites.
+	 * The main site (blog_id 1) is excluded.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $args Optional. Arguments for get_sites(). Default empty.
+	 * @return Group[] Array of Group objects.
+	 */
+	public static function get_all_groups( array $args = array() ): array {
+		$defaults = array(
+			'fields'       => 'ids',
+			'network_id'   => get_current_network_id(),
+			'site__not_in' => array( get_main_site_id() ),
+			'public'       => 1,
+			'archived'     => 0,
+			'deleted'      => 0,
+			'number'       => 100,
+		);
+
+		$args     = wp_parse_args( $args, $defaults );
+		$site_ids = get_sites( $args );
+		$groups   = array();
+
+		foreach ( $site_ids as $site_id ) {
+			$group = new self( (int) $site_id );
+			if ( $group->is_valid() ) {
+				$groups[] = $group;
+			}
+		}
+
+		return $groups;
+	}
+
+	/**
+	 * Get the groups a user belongs to.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $user_id The user ID.
+	 * @return Group[] Array of Group objects.
+	 */
+	public static function get_user_groups( int $user_id ): array {
+		$blogs  = get_blogs_of_user( $user_id );
+		$groups = array();
+
+		foreach ( $blogs as $blog ) {
+			// Skip the main site.
+			if ( get_main_site_id() === (int) $blog->userblog_id ) {
+				continue;
+			}
+
+			$group = new self( (int) $blog->userblog_id );
+			if ( $group->is_valid() ) {
+				$groups[] = $group;
+			}
+		}
+
+		return $groups;
 	}
 }

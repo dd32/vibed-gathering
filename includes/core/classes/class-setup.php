@@ -398,7 +398,6 @@ class Setup {
 		global $wpdb;
 
 		$tables[] = sprintf( Event::TABLE_FORMAT, $wpdb->prefix );
-		$tables[] = sprintf( Group::MEMBERSHIP_TABLE, $wpdb->prefix );
 
 		return $tables;
 	}
@@ -441,9 +440,6 @@ class Setup {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR.
 
 		dbDelta( $sql );
-
-		// Create group membership table.
-		Group_Setup::create_membership_table();
 
 		$this->add_online_event_term();
 		$this->schedule_rewrite_flush();

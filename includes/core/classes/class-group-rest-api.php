@@ -2,8 +2,8 @@
 /**
  * Handles the registration of Group REST API endpoints.
  *
- * This file contains the Group_Rest_Api class, which is responsible for registering and managing
- * various Group REST API endpoints within the GatherPress plugin.
+ * Provides REST API endpoints for group membership management, group discovery,
+ * and group event queries in a WordPress multisite environment.
  *
  * @package GatherPress\Core
  * @since 1.0.0
@@ -24,7 +24,7 @@ use WP_Error;
  * Class Group_Rest_Api.
  *
  * Manages REST API endpoints for group-related functionality including membership,
- * group events, and group discovery.
+ * group events, and group discovery across a WordPress multisite network.
  *
  * @since 1.0.0
  */
@@ -36,8 +36,6 @@ class Group_Rest_Api {
 
 	/**
 	 * Class constructor.
-	 *
-	 * This method initializes the object and sets up necessary hooks.
 	 *
 	 * @since 1.0.0
 	 */
@@ -54,7 +52,6 @@ class Group_Rest_Api {
 	 */
 	protected function setup_hooks(): void {
 		add_action( 'rest_api_init', array( $this, 'register_endpoints' ) );
-		add_filter( sprintf( 'rest_prepare_%s', Group::POST_TYPE ), array( $this, 'prepare_group_data' ) );
 	}
 
 	/**
@@ -91,6 +88,7 @@ class Group_Rest_Api {
 			$this->update_member_route(),
 			$this->events_route(),
 			$this->user_groups_route(),
+			$this->directory_route(),
 		);
 	}
 
@@ -111,9 +109,9 @@ class Group_Rest_Api {
 					return is_user_logged_in();
 				},
 				'args'                => array(
-					'post_id' => array(
+					'blog_id' => array(
 						'required'          => true,
-						'validate_callback' => array( $this, 'validate_group_post_id' ),
+						'sanitize_callback' => 'absint',
 					),
 				),
 			),
@@ -137,9 +135,9 @@ class Group_Rest_Api {
 					return is_user_logged_in();
 				},
 				'args'                => array(
-					'post_id' => array(
+					'blog_id' => array(
 						'required'          => true,
-						'validate_callback' => array( $this, 'validate_group_post_id' ),
+						'sanitize_callback' => 'absint',
 					),
 				),
 			),
@@ -161,9 +159,9 @@ class Group_Rest_Api {
 				'callback'            => array( $this, 'get_members' ),
 				'permission_callback' => '__return_true',
 				'args'                => array(
-					'post_id'  => array(
+					'blog_id'  => array(
 						'required'          => true,
-						'validate_callback' => array( $this, 'validate_group_post_id' ),
+						'sanitize_callback' => 'absint',
 					),
 					'role'     => array(
 						'required'          => false,
@@ -201,9 +199,9 @@ class Group_Rest_Api {
 					return is_user_logged_in();
 				},
 				'args'                => array(
-					'post_id' => array(
+					'blog_id' => array(
 						'required'          => true,
-						'validate_callback' => array( $this, 'validate_group_post_id' ),
+						'sanitize_callback' => 'absint',
 					),
 					'user_id' => array(
 						'required'          => true,
@@ -233,9 +231,9 @@ class Group_Rest_Api {
 				'callback'            => array( $this, 'get_events' ),
 				'permission_callback' => '__return_true',
 				'args'                => array(
-					'post_id' => array(
+					'blog_id' => array(
 						'required'          => true,
-						'validate_callback' => array( $this, 'validate_group_post_id' ),
+						'sanitize_callback' => 'absint',
 					),
 					'limit'   => array(
 						'required'          => false,
@@ -268,15 +266,37 @@ class Group_Rest_Api {
 	}
 
 	/**
-	 * Validate that a post ID belongs to a group post type.
+	 * Define the REST route for the group directory.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param mixed $value The value to validate.
-	 * @return bool True if valid, false otherwise.
+	 * @return array The REST route configuration.
 	 */
-	public function validate_group_post_id( $value ): bool {
-		return is_numeric( $value ) && Group::POST_TYPE === get_post_type( intval( $value ) );
+	protected function directory_route(): array {
+		return array(
+			'route' => 'directory',
+			'args'  => array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_directory' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'search'   => array(
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'per_page' => array(
+						'required'          => false,
+						'default'           => 20,
+						'sanitize_callback' => 'absint',
+					),
+					'page'     => array(
+						'required'          => false,
+						'default'           => 1,
+						'sanitize_callback' => 'absint',
+					),
+				),
+			),
+		);
 	}
 
 	/**
@@ -288,9 +308,9 @@ class Group_Rest_Api {
 	 * @return WP_REST_Response|WP_Error The response or error.
 	 */
 	public function join_group( WP_REST_Request $request ) {
-		$post_id = intval( $request->get_param( 'post_id' ) );
+		$blog_id = intval( $request->get_param( 'blog_id' ) );
 		$user_id = get_current_user_id();
-		$group   = new Group( $post_id );
+		$group   = new Group( $blog_id );
 
 		if ( ! $group->is_valid() ) {
 			return new WP_Error(
@@ -313,7 +333,7 @@ class Group_Rest_Api {
 		if ( ! $result ) {
 			return new WP_Error(
 				'join_failed',
-				__( 'Failed to join group.', 'gatherpress' ),
+				__( 'Failed to join group. You may be banned from this group.', 'gatherpress' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -335,9 +355,9 @@ class Group_Rest_Api {
 	 * @return WP_REST_Response|WP_Error The response or error.
 	 */
 	public function leave_group( WP_REST_Request $request ) {
-		$post_id = intval( $request->get_param( 'post_id' ) );
+		$blog_id = intval( $request->get_param( 'blog_id' ) );
 		$user_id = get_current_user_id();
-		$group   = new Group( $post_id );
+		$group   = new Group( $blog_id );
 
 		if ( ! $group->is_valid() ) {
 			return new WP_Error(
@@ -386,24 +406,22 @@ class Group_Rest_Api {
 	 * @return WP_REST_Response The response.
 	 */
 	public function get_members( WP_REST_Request $request ): WP_REST_Response {
-		$post_id  = intval( $request->get_param( 'post_id' ) );
+		$blog_id  = intval( $request->get_param( 'blog_id' ) );
 		$role     = $request->get_param( 'role' ) ?? '';
 		$page     = intval( $request->get_param( 'page' ) );
 		$per_page = min( intval( $request->get_param( 'per_page' ) ), 100 );
 		$offset   = ( $page - 1 ) * $per_page;
 
-		$group   = new Group( $post_id );
+		$group   = new Group( $blog_id );
 		$members = $group->get_members( $role, $per_page, $offset );
 
 		$data = array_map(
-			static function ( $member ) {
-				$user = get_user_by( 'id', $member->user_id );
+			static function ( $user ) use ( $group ) {
 				return array(
-					'user_id'    => (int) $member->user_id,
-					'role'       => $member->role,
-					'joined_at'  => $member->joined_at,
-					'name'       => $user ? $user->display_name : '',
-					'avatar_url' => get_avatar_url( (int) $member->user_id, array( 'size' => 96 ) ),
+					'user_id'    => $user->ID,
+					'name'       => $user->display_name,
+					'role'       => $group->get_member_role( $user->ID ),
+					'avatar_url' => get_avatar_url( $user->ID, array( 'size' => 96 ) ),
 				);
 			},
 			$members
@@ -426,16 +444,15 @@ class Group_Rest_Api {
 	 * @return WP_REST_Response|WP_Error The response or error.
 	 */
 	public function update_member( WP_REST_Request $request ) {
-		$post_id      = intval( $request->get_param( 'post_id' ) );
+		$blog_id      = intval( $request->get_param( 'blog_id' ) );
 		$target_user  = intval( $request->get_param( 'user_id' ) );
 		$new_role     = $request->get_param( 'role' );
 		$current_user = get_current_user_id();
 
-		$group        = new Group( $post_id );
-		$current_role = $group->get_member_role( $current_user );
+		$group = new Group( $blog_id );
 
-		// Only organizers can update member roles.
-		if ( Group::ROLE_ORGANIZER !== $current_role && ! current_user_can( 'manage_options' ) ) {
+		// Only organizers and super admins can update member roles.
+		if ( ! $group->can_manage_members( $current_user ) ) {
 			return new WP_Error(
 				'insufficient_permissions',
 				__( 'You do not have permission to manage members.', 'gatherpress' ),
@@ -453,9 +470,7 @@ class Group_Rest_Api {
 			);
 		}
 
-		return new WP_REST_Response(
-			array( 'success' => true )
-		);
+		return new WP_REST_Response( array( 'success' => true ) );
 	}
 
 	/**
@@ -467,27 +482,13 @@ class Group_Rest_Api {
 	 * @return WP_REST_Response The response.
 	 */
 	public function get_events( WP_REST_Request $request ): WP_REST_Response {
-		$post_id = intval( $request->get_param( 'post_id' ) );
+		$blog_id = intval( $request->get_param( 'blog_id' ) );
 		$limit   = min( intval( $request->get_param( 'limit' ) ), 50 );
 
-		$group  = new Group( $post_id );
+		$group  = new Group( $blog_id );
 		$events = $group->get_upcoming_events( $limit );
 
-		$data = array_map(
-			static function ( $event_post ) {
-				$event = new Event( $event_post->ID );
-				return array(
-					'id'        => $event_post->ID,
-					'title'     => get_the_title( $event_post->ID ),
-					'permalink' => get_permalink( $event_post->ID ),
-					'datetime'  => $event->get_display_datetime(),
-					'excerpt'   => get_the_excerpt( $event_post ),
-				);
-			},
-			$events
-		);
-
-		return new WP_REST_Response( array( 'events' => $data ) );
+		return new WP_REST_Response( array( 'events' => $events ) );
 	}
 
 	/**
@@ -499,75 +500,75 @@ class Group_Rest_Api {
 	 * @return WP_REST_Response The response.
 	 */
 	public function get_user_groups( WP_REST_Request $request ): WP_REST_Response {
-		global $wpdb;
-
 		$user_id = get_current_user_id();
-		$table   = sprintf( Group::MEMBERSHIP_TABLE, $wpdb->prefix );
+		$groups  = Group::get_user_groups( $user_id );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$memberships = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT group_id, role, joined_at FROM %i WHERE user_id = %d AND status = %s ORDER BY joined_at DESC', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder
-				$table,
-				$user_id,
-				'active'
-			)
+		$data = array_map(
+			static function ( Group $group ) use ( $user_id ) {
+				return array(
+					'blog_id'      => $group->get_blog_id(),
+					'name'         => $group->get_name(),
+					'url'          => $group->get_url(),
+					'description'  => $group->get_description(),
+					'role'         => $group->get_member_role( $user_id ),
+					'member_count' => $group->get_member_count(),
+					'type'         => $group->get_type(),
+					'location'     => $group->get_location(),
+				);
+			},
+			$groups
 		);
-
-		$data = array();
-		if ( is_array( $memberships ) ) {
-			foreach ( $memberships as $membership ) {
-				$group_post = get_post( (int) $membership->group_id );
-				if ( $group_post && 'publish' === $group_post->post_status ) {
-					$group  = new Group( (int) $membership->group_id );
-					$data[] = array(
-						'id'           => (int) $membership->group_id,
-						'title'        => get_the_title( (int) $membership->group_id ),
-						'permalink'    => get_permalink( (int) $membership->group_id ),
-						'role'         => $membership->role,
-						'joined_at'    => $membership->joined_at,
-						'member_count' => $group->get_member_count(),
-						'thumbnail'    => get_the_post_thumbnail_url( (int) $membership->group_id, 'medium' ),
-					);
-				}
-			}
-		}
 
 		return new WP_REST_Response( array( 'groups' => $data ) );
 	}
 
 	/**
-	 * Add group-specific data to group REST API responses.
+	 * Handle the group directory request.
+	 *
+	 * Returns a paginated list of all groups in the network.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param WP_REST_Response $response The REST response object.
-	 * @return WP_REST_Response Modified response with group data.
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return WP_REST_Response The response.
 	 */
-	public function prepare_group_data( WP_REST_Response $response ): WP_REST_Response {
-		$data    = $response->get_data();
-		$post_id = $data['id'] ?? 0;
+	public function get_directory( WP_REST_Request $request ): WP_REST_Response {
+		$search   = $request->get_param( 'search' ) ?? '';
+		$per_page = min( intval( $request->get_param( 'per_page' ) ), 100 );
+		$page     = intval( $request->get_param( 'page' ) );
+		$offset   = ( $page - 1 ) * $per_page;
 
-		if ( ! $post_id ) {
-			return $response;
-		}
-
-		$group = new Group( $post_id );
-
-		if ( ! $group->is_valid() ) {
-			return $response;
-		}
-
-		$data['gatherpress_group'] = array(
-			'location'     => $group->get_location(),
-			'type'         => $group->get_type(),
-			'member_count' => $group->get_member_count(),
-			'is_member'    => is_user_logged_in() ? $group->is_member( get_current_user_id() ) : false,
-			'current_role' => is_user_logged_in() ? $group->get_member_role( get_current_user_id() ) : null,
+		$args = array(
+			'number' => $per_page,
+			'offset' => $offset,
 		);
 
-		$response->set_data( $data );
+		if ( ! empty( $search ) ) {
+			$args['search'] = $search;
+		}
 
-		return $response;
+		$groups  = Group::get_all_groups( $args );
+		$user_id = get_current_user_id();
+
+		$data = array_map(
+			static function ( Group $group ) use ( $user_id ) {
+				$upcoming = $group->get_upcoming_events( 1 );
+				return array(
+					'blog_id'      => $group->get_blog_id(),
+					'name'         => $group->get_name(),
+					'url'          => $group->get_url(),
+					'description'  => $group->get_description(),
+					'member_count' => $group->get_member_count(),
+					'type'         => $group->get_type(),
+					'location'     => $group->get_location(),
+					'status'       => $group->get_status(),
+					'is_member'    => $user_id ? $group->is_member( $user_id ) : false,
+					'next_event'   => ! empty( $upcoming ) ? $upcoming[0] : null,
+				);
+			},
+			$groups
+		);
+
+		return new WP_REST_Response( array( 'groups' => $data ) );
 	}
 }
