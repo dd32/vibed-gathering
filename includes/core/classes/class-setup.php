@@ -74,6 +74,7 @@ class Setup {
 		Rsvp_Form::get_instance();
 		Rsvp_Query::get_instance();
 		Rsvp_Setup::get_instance();
+		Seo::get_instance();
 		Settings::get_instance();
 		Topic::get_instance();
 		User::get_instance();
