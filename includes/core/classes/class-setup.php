@@ -62,6 +62,7 @@ class Setup {
 		Feed::get_instance();
 		Event_Query::get_instance();
 		Event_Rest_Api::get_instance();
+		Email::get_instance();
 		Event_Setup::get_instance();
 		Geocoding::get_instance();
 		Group_Rest_Api::get_instance();
@@ -190,6 +191,7 @@ class Setup {
 	 */
 	public function deactivate_gatherpress_plugin(): void {
 		flush_rewrite_rules();
+		Email::unschedule_reminder_cron();
 		Recurrence_Generator::unschedule_cron();
 	}
 
