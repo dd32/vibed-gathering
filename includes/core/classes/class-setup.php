@@ -68,6 +68,7 @@ class Setup {
 		Group_Setup::get_instance();
 		Export::get_instance();
 		Import::get_instance();
+		Recurrence_Generator::get_instance();
 		Rsvp_Cleanup::get_instance();
 		Rsvp_Form::get_instance();
 		Rsvp_Query::get_instance();
@@ -189,6 +190,7 @@ class Setup {
 	 */
 	public function deactivate_gatherpress_plugin(): void {
 		flush_rewrite_rules();
+		Recurrence_Generator::unschedule_cron();
 	}
 
 	/**
