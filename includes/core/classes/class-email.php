@@ -56,6 +56,7 @@ class Email {
 	 */
 	protected function setup_hooks(): void {
 		add_action( 'gatherpress_rsvp_updated', array( $this, 'send_rsvp_confirmation' ), 10, 4 );
+		add_action( 'gatherpress_waitlist_promoted', array( $this, 'send_waitlist_promotion' ), 10, 2 );
 		add_action( self::REMINDER_CRON_HOOK, array( $this, 'process_event_reminders' ) );
 		add_action( 'init', array( $this, 'schedule_reminder_cron' ) );
 		add_action( 'gatherpress_recurring_event_created', array( $this, 'notify_new_recurring_event' ), 10, 2 );
@@ -136,6 +137,53 @@ class Email {
 				),
 				'event_id'    => $event_id,
 				'button_text' => __( 'View Event', 'gatherpress' ),
+				'button_url'  => get_the_permalink( $event_id ),
+			)
+		);
+
+		self::send( $user->user_email, $subject, $content );
+	}
+
+	/**
+	 * Send a waitlist promotion notification email.
+	 *
+	 * Called when a user is automatically promoted from the waiting list
+	 * to attending status because a spot opened up.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $event_id The event post ID.
+	 * @param int $user_id  The user ID who was promoted.
+	 * @return void
+	 */
+	public function send_waitlist_promotion( int $event_id, int $user_id ): void {
+		$user = get_user_by( 'id', $user_id );
+		if ( ! $user ) {
+			return;
+		}
+
+		$event = new Event( $event_id );
+		if ( ! $event->event ) {
+			return;
+		}
+
+		/* translators: %s: event title. */
+		$subject = sprintf( __( 'You\'re in! %s', 'gatherpress' ), get_the_title( $event_id ) );
+
+		$content = self::render_email_body(
+			array(
+				'greeting'    => sprintf(
+					/* translators: %s: user display name. */
+					__( 'Great news, %s!', 'gatherpress' ),
+					$user->display_name
+				),
+				'message'     => sprintf(
+					/* translators: %s: event title. */
+					__( 'A spot has opened up and you\'ve been moved from the waiting list to <strong>Attending</strong> for <strong>%s</strong>.', 'gatherpress' ),
+					esc_html( get_the_title( $event_id ) )
+				),
+				'event_id'    => $event_id,
+				'button_text' => __( 'View Event Details', 'gatherpress' ),
 				'button_url'  => get_the_permalink( $event_id ),
 			)
 		);

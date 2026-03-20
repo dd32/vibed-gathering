@@ -399,6 +399,17 @@ class Rsvp {
 				// @todo need to look into this since Open RSVP will not have a userId,
 				// but email or commentId if we can use that.
 				$this->save( $response['userId'], 'attending', $response['anonymous'] );
+
+				/**
+				 * Fires after a user is promoted from the waiting list to attending.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param int $post_id The event post ID.
+				 * @param int $user_id The user ID who was promoted.
+				 */
+				do_action( 'gatherpress_waitlist_promoted', $this->event->ID, $response['userId'] );
+
 				++$i;
 			}
 		}
