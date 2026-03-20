@@ -7,6 +7,11 @@
 
 - [`gatherpress_autoloader`](gatherpress_autoloader.md) Filters the registered autoloaders for GatherPress.
 
+## class-email.php
+
+- [`gatherpress_email_headers`](gatherpress_email_headers.md) Filters the email headers before sending.
+- [`gatherpress_recurring_event_notification`](gatherpress_recurring_event_notification.md) Fires when a recurring event notification should be sent.
+
 ## class-event-query.php
 
 - [`gatherpress_query_vars`](gatherpress_query_vars.md) This filter is documented in includes/query-loop.php
@@ -24,6 +29,13 @@
 - [`gatherpress_event_feed_content`](gatherpress_event_feed_content.md) Filters the event content in feeds.
 - [`gatherpress_event_feed_excerpt`](gatherpress_event_feed_excerpt.md) Filters the event excerpt in feeds.
 
+## class-group.php
+
+- [`gatherpress_group_member_added`](gatherpress_group_member_added.md) Fires after a user joins a group.
+- [`gatherpress_group_member_banned`](gatherpress_group_member_banned.md) Fires after a user is banned from a group.
+- [`gatherpress_group_member_removed`](gatherpress_group_member_removed.md) Fires after a user leaves a group.
+- [`gatherpress_group_member_role_updated`](gatherpress_group_member_role_updated.md) Fires after a member's role is updated.
+
 ## class-import.php
 
 - [`gatherpress_import`](gatherpress_import.md) Fires for every GatherPress data to be imported.
@@ -35,6 +47,10 @@
 ## class-migrate.php
 
 - [`gatherpress_pseudopostmetas`](gatherpress_pseudopostmetas.md) Filters the list of data-names and their respective export- and import-callbacks.
+
+## class-recurrence-generator.php
+
+- [`gatherpress_recurring_event_created`](gatherpress_recurring_event_created.md) Fires after a recurring event instance is created.
 
 ## class-settings.php
 
