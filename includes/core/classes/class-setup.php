@@ -56,6 +56,7 @@ class Setup {
 	 * @throws Exception If there are issues instantiating singleton classes.
 	 */
 	protected function instantiate_classes(): void {
+		Activity_Log::get_instance();
 		Assets::get_instance();
 		Block::get_instance();
 		Calendar_Feed::get_instance();
@@ -418,6 +419,7 @@ class Setup {
 		global $wpdb;
 
 		$tables[] = sprintf( Event::TABLE_FORMAT, $wpdb->prefix );
+		$tables[] = sprintf( Activity_Log::TABLE_FORMAT, $wpdb->prefix );
 
 		return $tables;
 	}
@@ -460,6 +462,9 @@ class Setup {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR.
 
 		dbDelta( $sql );
+
+		// Create activity log table.
+		Activity_Log::create_table();
 
 		$this->add_online_event_term();
 		$this->schedule_rewrite_flush();
