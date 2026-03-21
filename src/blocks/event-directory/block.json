@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "gatherpress/event-directory",
+	"version": "1.0.0",
+	"title": "Event Directory",
+	"category": "gatherpress",
+	"icon": "calendar-alt",
+	"example": {},
+	"description": "Displays a searchable directory of upcoming events across the network.",
+	"attributes": {
+		"perPage": {
+			"type": "number",
+			"default": 12
+		},
+		"showSearch": {
+			"type": "boolean",
+			"default": true
+		},
+		"columns": {
+			"type": "number",
+			"default": 3
+		}
+	},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"html": false
+	},
+	"textdomain": "gatherpress",
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php",
+	"style": "file:./style-index.css"
+}

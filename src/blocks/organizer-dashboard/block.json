@@ -1,0 +1,20 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "gatherpress/organizer-dashboard",
+	"version": "1.0.0",
+	"title": "Organizer Dashboard",
+	"category": "gatherpress",
+	"icon": "dashboard",
+	"example": {},
+	"description": "Displays group analytics and management tools for organizers.",
+	"attributes": {},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"html": false
+	},
+	"textdomain": "gatherpress",
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php",
+	"style": "file:./style-index.css"
+}
