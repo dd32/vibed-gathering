@@ -138,7 +138,7 @@ class Activity_Log {
 			$gatherpress_user_id = get_current_user_id();
 		}
 
-		$gatherpress_table = sprintf( self::TABLE_FORMAT, $wpdb->prefix );
+		$gatherpress_table = sprintf( self::TABLE_FORMAT, $wpdb->base_prefix );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$gatherpress_result = $wpdb->insert(
@@ -256,7 +256,7 @@ class Activity_Log {
 		$gatherpress_page     = intval( $request->get_param( 'page' ) );
 		$gatherpress_offset   = ( $gatherpress_page - 1 ) * $gatherpress_per_page;
 		$gatherpress_action   = $request->get_param( 'action' ) ?? '';
-		$gatherpress_table    = sprintf( self::TABLE_FORMAT, $wpdb->prefix );
+		$gatherpress_table    = sprintf( self::TABLE_FORMAT, $wpdb->base_prefix );
 
 		if ( ! empty( $gatherpress_action ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -311,7 +311,7 @@ class Activity_Log {
 	public function export_csv( WP_REST_Request $request ): void {
 		global $wpdb;
 
-		$gatherpress_table = sprintf( self::TABLE_FORMAT, $wpdb->prefix );
+		$gatherpress_table = sprintf( self::TABLE_FORMAT, $wpdb->base_prefix );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$gatherpress_rows = $wpdb->get_results(
@@ -360,7 +360,7 @@ class Activity_Log {
 	public static function create_table(): void {
 		global $wpdb;
 
-		$gatherpress_table   = sprintf( self::TABLE_FORMAT, $wpdb->prefix );
+		$gatherpress_table   = sprintf( self::TABLE_FORMAT, $wpdb->base_prefix );
 		$gatherpress_charset = $wpdb->get_charset_collate();
 
 		$gatherpress_sql = "CREATE TABLE {$gatherpress_table} (

@@ -420,7 +420,8 @@ class Setup {
 		global $wpdb;
 
 		$tables[] = sprintf( Event::TABLE_FORMAT, $wpdb->prefix );
-		$tables[] = sprintf( Activity_Log::TABLE_FORMAT, $wpdb->prefix );
+
+		// Note: Activity_Log table uses base_prefix (network-wide) and is not per-site.
 
 		return $tables;
 	}
