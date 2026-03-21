@@ -65,21 +65,22 @@ function initFeedbackForm() {
 	form.addEventListener( 'submit', async ( event ) => {
 		event.preventDefault();
 
-		const submitBtn = form.querySelector(
-			'.wp-block-gatherpress-event-feedback__submit'
-		);
 		const messageEl = form.querySelector(
 			'.wp-block-gatherpress-event-feedback__message'
 		);
-		const wrapper = form.closest(
-			'.wp-block-gatherpress-event-feedback'
-		);
-		const eventId = wrapper?.getAttribute( 'data-event-id' );
 
 		if ( ! ratingInput.value ) {
 			showMessage( messageEl, i18n.selectRating, 'error' );
 			return;
 		}
+
+		const submitBtn = form.querySelector(
+			'.wp-block-gatherpress-event-feedback__submit'
+		);
+		const wrapper = form.closest(
+			'.wp-block-gatherpress-event-feedback'
+		);
+		const eventId = wrapper?.getAttribute( 'data-event-id' );
 
 		submitBtn.disabled = true;
 		submitBtn.textContent = i18n.submitting;
