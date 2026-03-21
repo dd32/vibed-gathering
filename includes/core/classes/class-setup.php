@@ -65,10 +65,12 @@ class Setup {
 		Event_Rest_Api::get_instance();
 		Dormancy_Detector::get_instance();
 		Email::get_instance();
+		Event_Checkin::get_instance();
 		Event_Discussion::get_instance();
 		Events_Feed_Api::get_instance();
 		Event_Setup::get_instance();
 		Event_Status::get_instance();
+		Event_Template::get_instance();
 		Geocoding::get_instance();
 		Group_Application::get_instance();
 		Group_Rest_Api::get_instance();
