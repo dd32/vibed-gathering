@@ -1,18 +1,17 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "gatherpress/join-group-button",
+	"name": "gatherpress/application-form",
 	"version": "1.0.0",
-	"title": "Join Group Button",
+	"title": "Group Application Form",
 	"category": "gatherpress",
-	"icon": "admin-users",
+	"icon": "clipboard",
 	"example": {},
-	"description": "Displays a join/leave group button for the current site.",
+	"description": "Displays a form for users to apply to create a new community group.",
 	"attributes": {},
 	"supports": {
-		"align": [ "left", "center", "right" ],
-		"html": false,
-		"interactivity": true
+		"align": [ "wide" ],
+		"html": false
 	},
 	"textdomain": "gatherpress",
 	"editorScript": "file:./index.js",

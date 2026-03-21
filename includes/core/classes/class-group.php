@@ -589,7 +589,16 @@ class Group {
 			'number'       => 100,
 		);
 
-		$args     = wp_parse_args( $args, $defaults );
+		$args = wp_parse_args( $args, $defaults );
+
+		// Cache the site query results for 5 minutes to avoid repeated DB queries.
+		$gatherpress_cache_key = 'gatherpress_all_groups_' . md5( wp_json_encode( $args ) );
+		$gatherpress_cached    = wp_cache_get( $gatherpress_cache_key, GATHERPRESS_CACHE_GROUP );
+
+		if ( is_array( $gatherpress_cached ) ) {
+			return $gatherpress_cached;
+		}
+
 		$site_ids = get_sites( $args );
 		$groups   = array();
 
@@ -599,6 +608,8 @@ class Group {
 				$groups[] = $group;
 			}
 		}
+
+		wp_cache_set( $gatherpress_cache_key, $groups, GATHERPRESS_CACHE_GROUP, 300 );
 
 		return $groups;
 	}

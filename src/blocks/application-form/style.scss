@@ -1,0 +1,141 @@
+.wp-block-gatherpress-application-form {
+	max-width: 640px;
+
+	&__title {
+		margin: 0 0 0.5rem;
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: #1e293b;
+	}
+
+	&__intro {
+		margin: 0 0 2rem;
+		color: #64748b;
+		font-size: 1rem;
+		line-height: 1.5;
+	}
+
+	&__field {
+		margin-bottom: 1.25rem;
+
+		label {
+			display: block;
+			margin-bottom: 0.375rem;
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: #374151;
+
+			span {
+				color: #dc2626;
+			}
+		}
+
+		input,
+		textarea,
+		select {
+			width: 100%;
+			padding: 0.625rem 0.75rem;
+			border: 1px solid #d1d5db;
+			border-radius: 0.5rem;
+			font-size: 1rem;
+			font-family: inherit;
+			background: #fff;
+			transition: border-color 0.15s;
+
+			&:focus {
+				outline: none;
+				border-color: #6366f1;
+				box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
+			}
+
+			&:disabled {
+				opacity: 0.6;
+				background: #f8fafc;
+			}
+		}
+
+		textarea {
+			resize: vertical;
+		}
+
+		select {
+			appearance: auto;
+		}
+	}
+
+	&__row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+
+		@media (max-width: 480px) {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	&__submit {
+		margin-top: 1.5rem;
+	}
+
+	&__submit-btn {
+		display: inline-block;
+		padding: 0.75rem 2rem;
+		background-color: #6366f1;
+		color: #fff;
+		border: none;
+		border-radius: 0.5rem;
+		font-size: 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 0.15s;
+
+		&:hover {
+			background-color: #4f46e5;
+		}
+
+		&:disabled {
+			opacity: 0.6;
+			cursor: wait;
+		}
+	}
+
+	&__message {
+		margin-top: 1rem;
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		font-size: 0.9375rem;
+
+		&--success {
+			background-color: #f0fdf4;
+			color: #16a34a;
+			border: 1px solid #bbf7d0;
+		}
+
+		&--error {
+			background-color: #fef2f2;
+			color: #dc2626;
+			border: 1px solid #fecaca;
+		}
+	}
+
+	&__login {
+		text-align: center;
+		padding: 2rem;
+	}
+
+	&__login-btn {
+		display: inline-block;
+		margin-top: 1rem;
+		padding: 0.75rem 1.5rem;
+		background-color: #6366f1;
+		color: #fff;
+		border-radius: 0.5rem;
+		text-decoration: none;
+		font-weight: 600;
+
+		&:hover {
+			background-color: #4f46e5;
+			color: #fff;
+		}
+	}
+}
