@@ -48,6 +48,7 @@ class Seo {
 	 */
 	protected function setup_hooks(): void {
 		add_action( 'wp_head', array( $this, 'output_structured_data' ) );
+		add_action( 'wp_head', array( $this, 'output_open_graph_tags' ) );
 	}
 
 	/**
@@ -66,6 +67,85 @@ class Seo {
 
 		if ( Event::POST_TYPE === $post_type ) {
 			$this->output_event_structured_data();
+		}
+	}
+
+	/**
+	 * Output Open Graph and Twitter Card meta tags for event pages.
+	 *
+	 * Enables rich social sharing previews when event URLs are shared
+	 * on Facebook, Twitter/X, Mastodon, Slack, Discord, etc.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function output_open_graph_tags(): void {
+		if ( ! is_singular( Event::POST_TYPE ) ) {
+			return;
+		}
+
+		$gatherpress_post_id = get_the_ID();
+		if ( ! $gatherpress_post_id ) {
+			return;
+		}
+
+		$gatherpress_event     = new Event( $gatherpress_post_id );
+		$gatherpress_title     = get_the_title( $gatherpress_post_id );
+		$gatherpress_excerpt   = wp_strip_all_tags( get_the_excerpt( $gatherpress_post_id ) );
+		$gatherpress_url       = get_the_permalink( $gatherpress_post_id );
+		$gatherpress_thumbnail = get_the_post_thumbnail_url( $gatherpress_post_id, 'large' );
+		$gatherpress_site_name = get_bloginfo( 'name' );
+		$gatherpress_datetime  = $gatherpress_event->get_display_datetime();
+
+		// Build description with date info.
+		$gatherpress_description = $gatherpress_datetime;
+		if ( ! empty( $gatherpress_excerpt ) ) {
+			$gatherpress_description .= ' — ' . $gatherpress_excerpt;
+		}
+
+		// Open Graph tags.
+		$gatherpress_tags = array(
+			'og:type'        => 'event',
+			'og:title'       => $gatherpress_title,
+			'og:description' => mb_substr( $gatherpress_description, 0, 300 ),
+			'og:url'         => $gatherpress_url,
+			'og:site_name'   => $gatherpress_site_name,
+		);
+
+		if ( ! empty( $gatherpress_thumbnail ) ) {
+			$gatherpress_tags['og:image'] = $gatherpress_thumbnail;
+		}
+
+		// Twitter Card tags.
+		$gatherpress_tags['twitter:card']        = ! empty( $gatherpress_thumbnail ) ? 'summary_large_image' : 'summary';
+		$gatherpress_tags['twitter:title']       = $gatherpress_title;
+		$gatherpress_tags['twitter:description'] = mb_substr( $gatherpress_description, 0, 200 );
+
+		/**
+		 * Filters the Open Graph tags before output.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $gatherpress_tags The OG/Twitter tags.
+		 * @param int   $gatherpress_post_id The event post ID.
+		 */
+		$gatherpress_tags = apply_filters( 'gatherpress_open_graph_tags', $gatherpress_tags, $gatherpress_post_id );
+
+		foreach ( $gatherpress_tags as $gatherpress_property => $gatherpress_content ) {
+			if ( empty( $gatherpress_content ) ) {
+				continue;
+			}
+
+			// Use "name" attribute for twitter tags, "property" for OG.
+			$gatherpress_attr = str_starts_with( $gatherpress_property, 'twitter:' ) ? 'name' : 'property';
+
+			printf(
+				'<meta %s="%s" content="%s" />' . "\n",
+				esc_attr( $gatherpress_attr ),
+				esc_attr( $gatherpress_property ),
+				esc_attr( $gatherpress_content )
+			);
 		}
 	}
 
