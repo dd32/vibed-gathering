@@ -67,6 +67,7 @@ class Setup {
 		Email::get_instance();
 		Event_Checkin::get_instance();
 		Event_Discussion::get_instance();
+		Event_Feedback::get_instance();
 		Events_Feed_Api::get_instance();
 		Event_Setup::get_instance();
 		Event_Status::get_instance();
