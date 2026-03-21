@@ -75,9 +75,10 @@ $gatherpress_wrapper = get_block_wrapper_attributes(
 <div <?php echo $gatherpress_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 
 	<?php if ( $gatherpress_show_search ) : ?>
-		<div class="wp-block-gatherpress-event-directory__search">
+		<div class="wp-block-gatherpress-event-directory__search" role="search" aria-label="<?php esc_attr_e( 'Search events', 'gatherpress' ); ?>">
 			<form method="get" action="">
-				<input type="search" name="gp_events_search" value="<?php echo esc_attr( $gatherpress_search ); ?>" placeholder="<?php esc_attr_e( 'Search events...', 'gatherpress' ); ?>" />
+				<label for="gp-event-search" class="screen-reader-text"><?php esc_html_e( 'Search events', 'gatherpress' ); ?></label>
+				<input type="search" id="gp-event-search" name="gp_events_search" value="<?php echo esc_attr( $gatherpress_search ); ?>" placeholder="<?php esc_attr_e( 'Search events...', 'gatherpress' ); ?>" />
 				<button type="submit"><?php esc_html_e( 'Search', 'gatherpress' ); ?></button>
 			</form>
 		</div>
@@ -128,7 +129,7 @@ $gatherpress_wrapper = get_block_wrapper_attributes(
 		</div>
 
 		<?php if ( $gatherpress_total_pages > 1 ) : ?>
-			<nav class="wp-block-gatherpress-event-directory__pagination">
+			<nav class="wp-block-gatherpress-event-directory__pagination" aria-label="<?php esc_attr_e( 'Event directory pagination', 'gatherpress' ); ?>">
 				<?php
 				for ( $gatherpress_i = 1; $gatherpress_i <= $gatherpress_total_pages; $gatherpress_i++ ) {
 					$gatherpress_page_url = add_query_arg( array( 'gp_events_page' => $gatherpress_i, 'gp_events_search' => $gatherpress_search ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound

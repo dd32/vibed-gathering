@@ -51,9 +51,10 @@ $gatherpress_wrapper = get_block_wrapper_attributes(
 <div <?php echo $gatherpress_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 
 	<?php if ( $gatherpress_show_search ) : ?>
-		<div class="wp-block-gatherpress-group-directory__search">
+		<div class="wp-block-gatherpress-group-directory__search" role="search" aria-label="<?php esc_attr_e( 'Search groups', 'gatherpress' ); ?>">
 			<form method="get" action="">
-				<input type="search" name="gp_search" value="<?php echo esc_attr( $gatherpress_search ); ?>" placeholder="<?php esc_attr_e( 'Search groups...', 'gatherpress' ); ?>" />
+				<label for="gp-group-search" class="screen-reader-text"><?php esc_html_e( 'Search groups', 'gatherpress' ); ?></label>
+				<input type="search" id="gp-group-search" name="gp_search" value="<?php echo esc_attr( $gatherpress_search ); ?>" placeholder="<?php esc_attr_e( 'Search groups...', 'gatherpress' ); ?>" />
 				<button type="submit"><?php esc_html_e( 'Search', 'gatherpress' ); ?></button>
 			</form>
 		</div>
@@ -137,7 +138,7 @@ $gatherpress_wrapper = get_block_wrapper_attributes(
 		</div>
 
 		<?php if ( $gatherpress_total_pages > 1 ) : ?>
-			<nav class="wp-block-gatherpress-group-directory__pagination">
+			<nav class="wp-block-gatherpress-group-directory__pagination" aria-label="<?php esc_attr_e( 'Group directory pagination', 'gatherpress' ); ?>">
 				<?php
 				for ( $gatherpress_i = 1; $gatherpress_i <= $gatherpress_total_pages; $gatherpress_i++ ) {
 					$gatherpress_page_url = add_query_arg( array( 'gp_page' => $gatherpress_i, 'gp_search' => $gatherpress_search ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
