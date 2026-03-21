@@ -64,7 +64,6 @@
 		transition: color 0.1s;
 		line-height: 1;
 
-		&:hover,
 		&.selected {
 			color: #f59e0b;
 		}
@@ -72,6 +71,24 @@
 		&:disabled {
 			cursor: default;
 		}
+	}
+
+	// Highlight all stars up to the hovered one for better affordance.
+	&__star-select:hover &__star-btn {
+		color: #d1d5db;
+	}
+
+	&__star-select &__star-btn:hover,
+	&__star-select &__star-btn:hover ~ &__star-btn {
+		// This targets the hovered star; preceding siblings handled via JS.
+		color: #d1d5db;
+	}
+
+	// Use reverse order trick: display flex + direction row-reverse in the selector.
+	// Simpler approach: JS already handles the visual state on click.
+	// Just add hover color for the individual button.
+	&__star-select &__star-btn:hover {
+		color: #f59e0b;
 	}
 
 	// Comment input.

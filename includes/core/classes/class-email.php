@@ -54,12 +54,29 @@ class Email {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Cron hook for weekly digest emails.
+	 *
+	 * @since 1.0.0
+	 * @var string
+	 */
+	const DIGEST_CRON_HOOK = 'gatherpress_send_weekly_digest';
+
+	/**
+	 * Set up hooks for various purposes.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
 	protected function setup_hooks(): void {
 		add_action( 'gatherpress_rsvp_updated', array( $this, 'send_rsvp_confirmation' ), 10, 4 );
 		add_action( 'gatherpress_waitlist_promoted', array( $this, 'send_waitlist_promotion' ), 10, 2 );
 		add_action( self::REMINDER_CRON_HOOK, array( $this, 'process_event_reminders' ) );
 		add_action( self::REMINDER_CRON_HOOK, array( $this, 'process_followup_emails' ) );
+		add_action( self::DIGEST_CRON_HOOK, array( $this, 'send_weekly_digest' ) );
 		add_action( 'init', array( $this, 'schedule_reminder_cron' ) );
+		add_action( 'init', array( $this, 'schedule_digest_cron' ) );
 		add_action( 'gatherpress_recurring_event_created', array( $this, 'notify_new_recurring_event' ), 10, 2 );
 	}
 
@@ -77,6 +94,21 @@ class Email {
 	}
 
 	/**
+	 * Schedule the weekly digest cron event.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function schedule_digest_cron(): void {
+		if ( ! wp_next_scheduled( self::DIGEST_CRON_HOOK ) ) {
+			// Schedule for Monday mornings at 9am local time.
+			$gatherpress_next_monday = strtotime( 'next Monday 9:00' );
+			wp_schedule_event( $gatherpress_next_monday, 'weekly', self::DIGEST_CRON_HOOK );
+		}
+	}
+
+	/**
 	 * Unschedule the reminder cron event.
 	 *
 	 * @since 1.0.0
@@ -84,9 +116,14 @@ class Email {
 	 * @return void
 	 */
 	public static function unschedule_reminder_cron(): void {
-		$timestamp = wp_next_scheduled( self::REMINDER_CRON_HOOK );
-		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, self::REMINDER_CRON_HOOK );
+		$gatherpress_ts = wp_next_scheduled( self::REMINDER_CRON_HOOK );
+		if ( $gatherpress_ts ) {
+			wp_unschedule_event( $gatherpress_ts, self::REMINDER_CRON_HOOK );
+		}
+
+		$gatherpress_digest_ts = wp_next_scheduled( self::DIGEST_CRON_HOOK );
+		if ( $gatherpress_digest_ts ) {
+			wp_unschedule_event( $gatherpress_digest_ts, self::DIGEST_CRON_HOOK );
 		}
 	}
 
@@ -469,6 +506,111 @@ class Email {
 			);
 
 			self::send( $gatherpress_user->user_email, $gatherpress_subject, $gatherpress_content );
+		}
+	}
+
+	/**
+	 * Send weekly digest emails to all group members.
+	 *
+	 * Collects upcoming events for the next 7 days and sends a summary
+	 * email to each member of the group. Only runs on group sites (not main).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function send_weekly_digest(): void {
+		// Only send digests on group sites, not the main site.
+		if ( is_multisite() && is_main_site() ) {
+			return;
+		}
+
+		$gatherpress_group = new Group();
+
+		if ( ! $gatherpress_group->is_valid() ) {
+			return;
+		}
+
+		// Get events in the next 7 days.
+		$gatherpress_now     = gmdate( Event::DATETIME_FORMAT );
+		$gatherpress_7d      = gmdate( Event::DATETIME_FORMAT, time() + ( 7 * DAY_IN_SECONDS ) );
+		$gatherpress_query   = new \WP_Query(
+			array(
+				'post_type'      => Event::POST_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => 20,
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
+						'key'     => 'gatherpress_datetime_start_gmt',
+						'value'   => array( $gatherpress_now, $gatherpress_7d ),
+						'compare' => 'BETWEEN',
+						'type'    => 'DATETIME',
+					),
+				),
+				'meta_key'       => 'gatherpress_datetime_start_gmt', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'orderby'        => 'meta_value',
+				'order'          => 'ASC',
+			)
+		);
+
+		// Don't send empty digests.
+		if ( ! $gatherpress_query->have_posts() ) {
+			return;
+		}
+
+		// Build the events list HTML.
+		$gatherpress_events_html = '';
+		while ( $gatherpress_query->have_posts() ) {
+			$gatherpress_query->the_post();
+			$gatherpress_event = new Event( get_the_ID() );
+
+			// Skip cancelled events.
+			if ( Event_Status::is_cancelled( get_the_ID() ) ) {
+				continue;
+			}
+
+			$gatherpress_events_html .= sprintf(
+				'<div style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border-radius: 8px;">'
+				. '<strong><a href="%s" style="color: #6366f1; text-decoration: none;">%s</a></strong><br>'
+				. '<span style="color: #64748b; font-size: 14px;">%s</span>'
+				. '</div>',
+				esc_url( get_the_permalink() ),
+				esc_html( get_the_title() ),
+				esc_html( $gatherpress_event->get_display_datetime() )
+			);
+		}
+		wp_reset_postdata();
+
+		if ( empty( $gatherpress_events_html ) ) {
+			return;
+		}
+
+		$gatherpress_group_name = $gatherpress_group->get_name();
+
+		/* translators: %s: group name. */
+		$gatherpress_subject = sprintf( __( 'This Week in %s', 'gatherpress' ), $gatherpress_group_name );
+
+		$gatherpress_members = $gatherpress_group->get_members( '', 1000 );
+
+		foreach ( $gatherpress_members as $gatherpress_member ) {
+			$gatherpress_content = self::render_email_body(
+				array(
+					'greeting' => sprintf(
+						/* translators: %s: user display name. */
+						__( 'Hi %s,', 'gatherpress' ),
+						$gatherpress_member->display_name
+					),
+					'message'  => sprintf(
+						/* translators: %s: group name. */
+						__( 'Here are the upcoming events this week in <strong>%s</strong>:', 'gatherpress' ),
+						esc_html( $gatherpress_group_name )
+					) . '<br><br>' . $gatherpress_events_html,
+					'button_text' => __( 'View All Events', 'gatherpress' ),
+					'button_url'  => home_url(),
+				)
+			);
+
+			self::send( $gatherpress_member->user_email, $gatherpress_subject, $gatherpress_content );
 		}
 	}
 
