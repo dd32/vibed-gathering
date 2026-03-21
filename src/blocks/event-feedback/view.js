@@ -1,7 +1,8 @@
 /**
  * Front-end interactivity for the Event Feedback block.
  *
- * Handles star rating selection and feedback form submission.
+ * Handles star rating selection with hover preview, and feedback
+ * form submission via native fetch().
  */
 
 function initFeedbackForm() {
@@ -10,24 +11,55 @@ function initFeedbackForm() {
 		return;
 	}
 
-	// Star rating selection.
+	// Read i18n strings from data attributes.
+	const i18n = {
+		selectRating:
+			form.dataset.i18nSelectRating || 'Please select a star rating.',
+		submitting: form.dataset.i18nSubmitting || 'Submitting...',
+		submit: form.dataset.i18nSubmit || 'Submit Feedback',
+		success:
+			form.dataset.i18nSuccess || 'Thank you for your feedback!',
+		error: form.dataset.i18nError || 'Something went wrong.',
+	};
+
 	const starBtns = form.querySelectorAll(
 		'.wp-block-gatherpress-event-feedback__star-btn'
 	);
 	const ratingInput = form.querySelector('input[name="rating"]');
+	let currentRating = 0;
 
+	// Star rating click handler.
 	starBtns.forEach((btn) => {
 		btn.addEventListener('click', () => {
-			const rating = btn.getAttribute('data-rating');
-			ratingInput.value = rating;
-
-			// Update visual state.
-			starBtns.forEach((b) => {
-				const r = parseInt(b.getAttribute('data-rating'), 10);
-				b.classList.toggle('selected', r <= parseInt(rating, 10));
-			});
+			currentRating = parseInt(
+				btn.getAttribute('data-rating'),
+				10
+			);
+			ratingInput.value = currentRating;
+			updateStarDisplay(starBtns, currentRating);
 		});
 	});
+
+	// Star rating hover preview.
+	starBtns.forEach((btn) => {
+		btn.addEventListener('mouseenter', () => {
+			const hoverRating = parseInt(
+				btn.getAttribute('data-rating'),
+				10
+			);
+			updateStarDisplay(starBtns, hoverRating);
+		});
+	});
+
+	// Restore to current rating on mouse leave.
+	const starSelect = form.querySelector(
+		'.wp-block-gatherpress-event-feedback__star-select'
+	);
+	if (starSelect) {
+		starSelect.addEventListener('mouseleave', () => {
+			updateStarDisplay(starBtns, currentRating);
+		});
+	}
 
 	// Form submission.
 	form.addEventListener('submit', async (event) => {
@@ -45,15 +77,12 @@ function initFeedbackForm() {
 		const eventId = wrapper?.getAttribute('data-event-id');
 
 		if (!ratingInput.value) {
-			messageEl.className =
-				'wp-block-gatherpress-event-feedback__message wp-block-gatherpress-event-feedback__message--error';
-			messageEl.textContent = 'Please select a star rating.';
-			messageEl.hidden = false;
+			showMessage(messageEl, i18n.selectRating, 'error');
 			return;
 		}
 
 		submitBtn.disabled = true;
-		submitBtn.textContent = 'Submitting...';
+		submitBtn.textContent = i18n.submitting;
 		messageEl.hidden = true;
 
 		try {
@@ -79,29 +108,51 @@ function initFeedbackForm() {
 			const data = await response.json();
 
 			if (response.ok) {
-				messageEl.className =
-					'wp-block-gatherpress-event-feedback__message wp-block-gatherpress-event-feedback__message--success';
-				messageEl.textContent =
-					data.message || 'Thank you for your feedback!';
-				messageEl.hidden = false;
+				showMessage(
+					messageEl,
+					data.message || i18n.success,
+					'success'
+				);
 				form.querySelectorAll(
 					'input, textarea, button'
 				).forEach((el) => {
 					el.disabled = true;
 				});
 			} else {
-				throw new Error(data.message || 'Submission failed.');
+				throw new Error(data.message || i18n.error);
 			}
 		} catch (error) {
-			messageEl.className =
-				'wp-block-gatherpress-event-feedback__message wp-block-gatherpress-event-feedback__message--error';
-			messageEl.textContent =
-				error.message || 'Something went wrong.';
-			messageEl.hidden = false;
+			showMessage(messageEl, error.message || i18n.error, 'error');
 			submitBtn.disabled = false;
-			submitBtn.textContent = 'Submit Feedback';
+			submitBtn.textContent = i18n.submit;
 		}
 	});
+}
+
+/**
+ * Update the visual display of star buttons.
+ *
+ * @param {NodeList} buttons The star buttons.
+ * @param {number}   rating The rating to display (1-5, or 0 for none).
+ */
+function updateStarDisplay(buttons, rating) {
+	buttons.forEach((btn) => {
+		const r = parseInt(btn.getAttribute('data-rating'), 10);
+		btn.classList.toggle('selected', r <= rating);
+	});
+}
+
+/**
+ * Show a message in the feedback form.
+ *
+ * @param {Element} el   The message element.
+ * @param {string}  text The message text.
+ * @param {string}  type 'success' or 'error'.
+ */
+function showMessage(el, text, type) {
+	el.className = `wp-block-gatherpress-event-feedback__message wp-block-gatherpress-event-feedback__message--${type}`;
+	el.textContent = text;
+	el.hidden = false;
 }
 
 if (document.readyState === 'loading') {

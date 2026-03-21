@@ -65,6 +65,11 @@ class Location_Search {
 	 * @return void
 	 */
 	protected function setup_hooks(): void {
+		// Location search across groups requires multisite.
+		if ( ! is_multisite() ) {
+			return;
+		}
+
 		add_action( 'rest_api_init', array( $this, 'register_endpoints' ) );
 	}
 

@@ -51,6 +51,11 @@ class Group_Rest_Api {
 	 * @return void
 	 */
 	protected function setup_hooks(): void {
+		// Group endpoints require multisite for meaningful behavior.
+		if ( ! is_multisite() ) {
+			return;
+		}
+
 		add_action( 'rest_api_init', array( $this, 'register_endpoints' ) );
 	}
 

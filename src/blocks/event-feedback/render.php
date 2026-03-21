@@ -91,7 +91,7 @@ $gatherpress_wrapper = get_block_wrapper_attributes(
 
 	<!-- Feedback form -->
 	<?php if ( is_user_logged_in() && ! $gatherpress_user_feedback ) : ?>
-		<form class="wp-block-gatherpress-event-feedback__form" data-gp-feedback-form>
+		<form class="wp-block-gatherpress-event-feedback__form" data-gp-feedback-form data-i18n-select-rating="<?php esc_attr_e( 'Please select a star rating.', 'gatherpress' ); ?>" data-i18n-submitting="<?php esc_attr_e( 'Submitting...', 'gatherpress' ); ?>" data-i18n-submit="<?php esc_attr_e( 'Submit Feedback', 'gatherpress' ); ?>" data-i18n-success="<?php esc_attr_e( 'Thank you for your feedback!', 'gatherpress' ); ?>" data-i18n-error="<?php esc_attr_e( 'Something went wrong.', 'gatherpress' ); ?>">
 			<?php wp_nonce_field( 'wp_rest', '_wpnonce' ); ?>
 			<div class="wp-block-gatherpress-event-feedback__rating-input">
 				<label><?php esc_html_e( 'Your Rating', 'gatherpress' ); ?></label>
