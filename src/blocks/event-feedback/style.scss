@@ -1,0 +1,197 @@
+.wp-block-gatherpress-event-feedback {
+	border-top: 1px solid #e2e8f0;
+	padding-top: 2rem;
+	margin-top: 2rem;
+
+	&__title {
+		margin: 0 0 1rem;
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: #1e293b;
+	}
+
+	// Summary stars.
+	&__summary {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 1.5rem;
+	}
+
+	&__star {
+		font-size: 1.25rem;
+		line-height: 1;
+
+		&--filled {
+			color: #f59e0b;
+		}
+
+		&--empty {
+			color: #d1d5db;
+		}
+	}
+
+	&__avg {
+		font-size: 0.875rem;
+		color: #64748b;
+	}
+
+	// Star rating input.
+	&__rating-input {
+		margin-bottom: 1rem;
+
+		label {
+			display: block;
+			margin-bottom: 0.375rem;
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: #374151;
+		}
+	}
+
+	&__star-select {
+		display: flex;
+		gap: 0.25rem;
+	}
+
+	&__star-btn {
+		background: none;
+		border: none;
+		font-size: 1.75rem;
+		color: #d1d5db;
+		cursor: pointer;
+		padding: 0.125rem;
+		transition: color 0.1s;
+		line-height: 1;
+
+		&:hover,
+		&.selected {
+			color: #f59e0b;
+		}
+
+		&:disabled {
+			cursor: default;
+		}
+	}
+
+	// Comment input.
+	&__comment-input {
+		margin-bottom: 1rem;
+
+		label {
+			display: block;
+			margin-bottom: 0.375rem;
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: #374151;
+		}
+
+		textarea {
+			width: 100%;
+			padding: 0.625rem 0.75rem;
+			border: 1px solid #d1d5db;
+			border-radius: 0.5rem;
+			font-size: 1rem;
+			font-family: inherit;
+			resize: vertical;
+
+			&:focus {
+				outline: none;
+				border-color: #6366f1;
+				box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
+			}
+		}
+	}
+
+	&__submit {
+		padding: 0.625rem 1.5rem;
+		background-color: #6366f1;
+		color: #fff;
+		border: none;
+		border-radius: 0.5rem;
+		font-size: 0.9375rem;
+		font-weight: 600;
+		cursor: pointer;
+
+		&:hover {
+			background-color: #4f46e5;
+		}
+
+		&:disabled {
+			opacity: 0.6;
+			cursor: wait;
+		}
+	}
+
+	&__message {
+		margin-top: 0.75rem;
+		padding: 0.625rem 0.75rem;
+		border-radius: 0.375rem;
+		font-size: 0.875rem;
+
+		&--success {
+			background-color: #f0fdf4;
+			color: #16a34a;
+		}
+
+		&--error {
+			background-color: #fef2f2;
+			color: #dc2626;
+		}
+	}
+
+	&__thankyou {
+		color: #16a34a;
+		font-weight: 500;
+	}
+
+	&__login-prompt a {
+		color: #6366f1;
+		font-weight: 500;
+	}
+
+	// Reviews list.
+	&__reviews {
+		margin-top: 1.5rem;
+		border-top: 1px solid #f1f5f9;
+		padding-top: 1rem;
+	}
+
+	&__review {
+		padding: 0.75rem 0;
+		border-bottom: 1px solid #f1f5f9;
+
+		&:last-child {
+			border-bottom: none;
+		}
+	}
+
+	&__review-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.375rem;
+
+		img {
+			border-radius: 50%;
+			width: 32px;
+			height: 32px;
+		}
+
+		strong {
+			font-size: 0.875rem;
+			color: #1e293b;
+		}
+	}
+
+	&__review-stars {
+		font-size: 0.875rem;
+	}
+
+	&__review-text {
+		margin: 0.25rem 0 0;
+		font-size: 0.875rem;
+		color: #374151;
+		line-height: 1.5;
+	}
+}

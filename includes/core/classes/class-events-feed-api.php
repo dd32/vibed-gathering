@@ -127,12 +127,30 @@ class Events_Feed_Api {
 		$page     = max( 1, intval( $request->get_param( 'page' ) ) );
 		$per_page = min( self::MAX_PER_PAGE, max( 1, intval( $request->get_param( 'per_page' ) ) ) );
 
-		$total       = 0;
-		$site_events = $this->query_network_events( $page, $per_page, $total );
+		// Use transient cache for expensive cross-site queries (5 min TTL).
+		$gatherpress_cache_key = 'gatherpress_events_feed_' . $page . '_' . $per_page;
+		$gatherpress_cached    = get_site_transient( $gatherpress_cache_key );
 
-		$events = array();
-		foreach ( $site_events as $item ) {
-			$events[] = $this->format_event( $item );
+		if ( is_array( $gatherpress_cached ) ) {
+			$events = $gatherpress_cached['events'];
+			$total  = $gatherpress_cached['total'];
+		} else {
+			$total       = 0;
+			$site_events = $this->query_network_events( $page, $per_page, $total );
+
+			$events = array();
+			foreach ( $site_events as $item ) {
+				$events[] = $this->format_event( $item );
+			}
+
+			set_site_transient(
+				$gatherpress_cache_key,
+				array(
+					'events' => $events,
+					'total'  => $total,
+				),
+				self::CACHE_MAX_AGE
+			);
 		}
 
 		$total_pages = (int) ceil( $total / $per_page );

@@ -1,0 +1,26 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "gatherpress/event-feedback",
+	"version": "1.0.0",
+	"title": "Event Feedback",
+	"category": "gatherpress",
+	"icon": "star-filled",
+	"example": {},
+	"description": "Displays a post-event feedback form with star ratings and a summary of existing feedback.",
+	"usesContext": [ "postId", "postType" ],
+	"attributes": {},
+	"supports": {
+		"gatherpress": {
+			"blockGuard": true,
+			"postIdOverride": true
+		},
+		"align": [ "wide" ],
+		"html": false
+	},
+	"textdomain": "gatherpress",
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js"
+}

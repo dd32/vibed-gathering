@@ -218,12 +218,15 @@ class Recurrence_Generator {
 		$time_of_day = $start_dt->format( 'H:i:s' );
 
 		// Calculate occurrences starting from the template's start date.
+		// Cap at a reasonable number based on the horizon (WEEKS_AHEAD weeks).
+		// For weekly events: 4 weeks = ~4 occurrences. Add buffer for safety.
 		$today       = new DateTime( 'now', new DateTimeZone( 'UTC' ) );
 		$horizon     = ( clone $today )->modify( '+' . self::WEEKS_AHEAD . ' weeks' );
-		$occurrences = Recurrence::calculate_occurrences(
+		$gatherpress_max_count = self::WEEKS_AHEAD * 2 + 10;
+		$occurrences           = Recurrence::calculate_occurrences(
 			$rule,
 			$start_dt->format( 'Y-m-d' ),
-			200
+			$gatherpress_max_count
 		);
 
 		$created_ids = array();
