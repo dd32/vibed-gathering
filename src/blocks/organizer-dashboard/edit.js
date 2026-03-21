@@ -14,14 +14,14 @@ const Edit = () => {
 	const blockProps = useBlockProps();
 
 	return (
-		<div {...blockProps}>
+		<div { ...blockProps }>
 			<Placeholder
 				icon="dashboard"
-				label={__('Organizer Dashboard', 'gatherpress')}
-				instructions={__(
+				label={ __( 'Organizer Dashboard', 'gatherpress' ) }
+				instructions={ __(
 					'Displays group metrics, upcoming events, recent RSVPs, and quick actions for organizers. Only visible to organizers on the front-end.',
 					'gatherpress'
-				)}
+				) }
 			/>
 		</div>
 	);

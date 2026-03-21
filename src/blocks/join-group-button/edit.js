@@ -14,14 +14,14 @@ const Edit = () => {
 	const blockProps = useBlockProps();
 
 	return (
-		<div {...blockProps}>
+		<div { ...blockProps }>
 			<Placeholder
 				icon="admin-users"
-				label={__('Join Group Button', 'gatherpress')}
-				instructions={__(
+				label={ __( 'Join Group Button', 'gatherpress' ) }
+				instructions={ __(
 					'Displays a join/leave button for the current group. Shown on the front-end only.',
 					'gatherpress'
-				)}
+				) }
 			/>
 		</div>
 	);

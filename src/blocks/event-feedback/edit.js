@@ -14,14 +14,14 @@ const Edit = () => {
 	const blockProps = useBlockProps();
 
 	return (
-		<div {...blockProps}>
+		<div { ...blockProps }>
 			<Placeholder
 				icon="star-filled"
-				label={__('Event Feedback', 'gatherpress')}
-				instructions={__(
+				label={ __( 'Event Feedback', 'gatherpress' ) }
+				instructions={ __(
 					'Shows a star rating form for past events and displays aggregated feedback. Only visible after the event date.',
 					'gatherpress'
-				)}
+				) }
 			/>
 		</div>
 	);

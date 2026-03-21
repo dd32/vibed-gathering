@@ -14,14 +14,14 @@ const Edit = () => {
 	const blockProps = useBlockProps();
 
 	return (
-		<div {...blockProps}>
+		<div { ...blockProps }>
 			<Placeholder
 				icon="clipboard"
-				label={__('Group Application Form', 'gatherpress')}
-				instructions={__(
+				label={ __( 'Group Application Form', 'gatherpress' ) }
+				instructions={ __(
 					'Displays a form for users to apply to create a new community group. Only shown to logged-in users on the main site.',
 					'gatherpress'
-				)}
+				) }
 			/>
 		</div>
 	);

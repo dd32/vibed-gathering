@@ -59,7 +59,7 @@
 			grid-template-columns: repeat(4, 1fr);
 		}
 
-		@media (max-width: 768px) {
+		@media (width <= 768px) {
 			&--cols-2,
 			&--cols-3,
 			&--cols-4 {
@@ -67,7 +67,7 @@
 			}
 		}
 
-		@media (min-width: 769px) and (max-width: 1024px) {
+		@media (width >= 769px) and (width <= 1024px) {
 			&--cols-3,
 			&--cols-4 {
 				grid-template-columns: repeat(2, 1fr);

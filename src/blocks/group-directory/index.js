@@ -12,6 +12,6 @@ import metadata from './block.json';
 /**
  * Register the Group Directory block.
  */
-registerBlockType(metadata.name, {
+registerBlockType( metadata.name, {
 	edit,
-});
+} );

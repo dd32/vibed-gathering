@@ -9,12 +9,12 @@
  * Initialize the application form.
  */
 function initApplicationForm() {
-	const form = document.querySelector('[data-gp-application-form]');
-	if (!form) {
+	const form = document.querySelector( '[data-gp-application-form]' );
+	if ( ! form ) {
 		return;
 	}
 
-	form.addEventListener('submit', handleFormSubmit);
+	form.addEventListener( 'submit', handleFormSubmit );
 }
 
 /**
@@ -22,7 +22,7 @@ function initApplicationForm() {
  *
  * @param {Event} event The submit event.
  */
-async function handleFormSubmit(event) {
+async function handleFormSubmit( event ) {
 	event.preventDefault();
 
 	const form = event.currentTarget;
@@ -34,14 +34,14 @@ async function handleFormSubmit(event) {
 	);
 
 	// Gather form data.
-	const formData = new FormData(form);
+	const formData = new FormData( form );
 	const data = {
-		group_name: formData.get('group_name'),
-		description: formData.get('description'),
-		city: formData.get('city'),
-		country: formData.get('country'),
-		frequency: formData.get('frequency'),
-		organizer_info: formData.get('organizer_info') || '',
+		group_name: formData.get( 'group_name' ),
+		description: formData.get( 'description' ),
+		city: formData.get( 'city' ),
+		country: formData.get( 'country' ),
+		frequency: formData.get( 'frequency' ),
+		organizer_info: formData.get( 'organizer_info' ) || '',
 	};
 
 	// Read i18n strings from data attributes.
@@ -58,7 +58,7 @@ async function handleFormSubmit(event) {
 
 	try {
 		// Get nonce from the form's hidden field.
-		const nonce = formData.get('_wpnonce') || '';
+		const nonce = formData.get( '_wpnonce' ) || '';
 
 		const response = await fetch(
 			'/wp-json/gatherpress/v1/group-application/submit',
@@ -68,13 +68,13 @@ async function handleFormSubmit(event) {
 					'Content-Type': 'application/json',
 					'X-WP-Nonce': nonce,
 				},
-				body: JSON.stringify(data),
+				body: JSON.stringify( data ),
 			}
 		);
 
 		const result = await response.json();
 
-		if (response.ok && result.success !== false) {
+		if ( response.ok && false !== result.success ) {
 			// Show success message.
 			messageEl.className =
 				'wp-block-gatherpress-application-form__message wp-block-gatherpress-application-form__message--success';
@@ -84,15 +84,15 @@ async function handleFormSubmit(event) {
 			// Disable the form.
 			form.querySelectorAll(
 				'input, textarea, select, button'
-			).forEach((el) => {
+			).forEach( ( el ) => {
 				el.disabled = true;
-			});
+			} );
 		} else {
 			throw new Error(
 				result.message || 'Submission failed.'
 			);
 		}
-	} catch (error) {
+	} catch ( error ) {
 		// Show error message.
 		messageEl.className =
 			'wp-block-gatherpress-application-form__message wp-block-gatherpress-application-form__message--error';
@@ -106,8 +106,8 @@ async function handleFormSubmit(event) {
 }
 
 // Initialize when DOM is ready.
-if (document.readyState === 'loading') {
-	document.addEventListener('DOMContentLoaded', initApplicationForm);
+if ( 'loading' === document.readyState ) {
+	document.addEventListener( 'DOMContentLoaded', initApplicationForm );
 } else {
 	initApplicationForm();
 }

@@ -14,14 +14,14 @@ const Edit = () => {
 	const blockProps = useBlockProps();
 
 	return (
-		<div {...blockProps}>
+		<div { ...blockProps }>
 			<Placeholder
 				icon="admin-multisite"
-				label={__('Network Dashboard', 'gatherpress')}
-				instructions={__(
+				label={ __( 'Network Dashboard', 'gatherpress' ) }
+				instructions={ __(
 					'Shows network-wide metrics, pending applications, at-risk/dormant groups, and recent activity. Only visible to super admins.',
 					'gatherpress'
-				)}
+				) }
 			/>
 		</div>
 	);
