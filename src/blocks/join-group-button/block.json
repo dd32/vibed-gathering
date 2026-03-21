@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "gatherpress/join-group-button",
+	"version": "1.0.0",
+	"title": "Join Group Button",
+	"category": "gatherpress",
+	"icon": "admin-users",
+	"example": {},
+	"description": "Displays a join/leave group button for the current site.",
+	"attributes": {},
+	"supports": {
+		"align": [ "left", "center", "right" ],
+		"html": false,
+		"interactivity": true
+	},
+	"textdomain": "gatherpress",
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php",
+	"style": "file:./style-index.css"
+}
