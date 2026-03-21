@@ -58,6 +58,7 @@ class Email {
 		add_action( 'gatherpress_rsvp_updated', array( $this, 'send_rsvp_confirmation' ), 10, 4 );
 		add_action( 'gatherpress_waitlist_promoted', array( $this, 'send_waitlist_promotion' ), 10, 2 );
 		add_action( self::REMINDER_CRON_HOOK, array( $this, 'process_event_reminders' ) );
+		add_action( self::REMINDER_CRON_HOOK, array( $this, 'process_followup_emails' ) );
 		add_action( 'init', array( $this, 'schedule_reminder_cron' ) );
 		add_action( 'gatherpress_recurring_event_created', array( $this, 'notify_new_recurring_event' ), 10, 2 );
 	}
@@ -364,6 +365,111 @@ class Email {
 		 * @param int $template_event_id The template event post ID.
 		 */
 		do_action( 'gatherpress_recurring_event_notification', $new_event_id, $template_event_id );
+	}
+
+	/**
+	 * Process post-event follow-up emails.
+	 *
+	 * Sends thank-you emails to attendees of events that ended in the last
+	 * 24 hours, with links to the feedback survey.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function process_followup_emails(): void {
+		global $wpdb;
+
+		$gatherpress_table    = sprintf( Event::TABLE_FORMAT, $wpdb->prefix );
+		$gatherpress_now      = gmdate( Event::DATETIME_FORMAT );
+		$gatherpress_24h_ago  = gmdate( Event::DATETIME_FORMAT, time() - DAY_IN_SECONDS );
+
+		// Find events that ended in the last 24 hours.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$gatherpress_events = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnsupportedIdentifierPlaceholder
+				'SELECT post_id FROM %i WHERE datetime_end_gmt BETWEEN %s AND %s',
+				$gatherpress_table,
+				$gatherpress_24h_ago,
+				$gatherpress_now
+			)
+		);
+
+		if ( ! is_array( $gatherpress_events ) ) {
+			return;
+		}
+
+		foreach ( $gatherpress_events as $gatherpress_row ) {
+			$gatherpress_event_id = (int) $gatherpress_row->post_id;
+
+			// Check if follow-up has already been sent.
+			$gatherpress_sent = get_post_meta( $gatherpress_event_id, 'gatherpress_followup_sent', true );
+			if ( $gatherpress_sent ) {
+				continue;
+			}
+
+			// Skip cancelled events.
+			if ( Event_Status::is_cancelled( $gatherpress_event_id ) ) {
+				continue;
+			}
+
+			$this->send_followup_email( $gatherpress_event_id );
+			update_post_meta( $gatherpress_event_id, 'gatherpress_followup_sent', 1 );
+		}
+	}
+
+	/**
+	 * Send a post-event follow-up email to all attending RSVPs.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $gatherpress_event_id The event post ID.
+	 * @return void
+	 */
+	private function send_followup_email( int $gatherpress_event_id ): void {
+		$gatherpress_event = new Event( $gatherpress_event_id );
+		if ( ! $gatherpress_event->event || ! $gatherpress_event->rsvp ) {
+			return;
+		}
+
+		$gatherpress_responses = $gatherpress_event->rsvp->responses();
+
+		if ( empty( $gatherpress_responses['attending']['records'] ) ) {
+			return;
+		}
+
+		$gatherpress_title = get_the_title( $gatherpress_event_id );
+
+		/* translators: %s: event title. */
+		$gatherpress_subject = sprintf( __( 'Thanks for attending: %s', 'gatherpress' ), $gatherpress_title );
+
+		foreach ( $gatherpress_responses['attending']['records'] as $gatherpress_record ) {
+			$gatherpress_user = get_user_by( 'id', $gatherpress_record['id'] );
+			if ( ! $gatherpress_user ) {
+				continue;
+			}
+
+			$gatherpress_content = self::render_email_body(
+				array(
+					'greeting'    => sprintf(
+						/* translators: %s: user display name. */
+						__( 'Thanks for attending, %s!', 'gatherpress' ),
+						$gatherpress_user->display_name
+					),
+					'message'     => sprintf(
+						/* translators: %s: event title. */
+						__( 'We hope you enjoyed <strong>%s</strong>. We\'d love to hear your feedback to help us make future events even better.', 'gatherpress' ),
+						esc_html( $gatherpress_title )
+					),
+					'event_id'    => $gatherpress_event_id,
+					'button_text' => __( 'Leave Feedback', 'gatherpress' ),
+					'button_url'  => get_the_permalink( $gatherpress_event_id ) . '#feedback',
+				)
+			);
+
+			self::send( $gatherpress_user->user_email, $gatherpress_subject, $gatherpress_content );
+		}
 	}
 
 	/**
