@@ -1,0 +1,138 @@
+.wp-block-gatherpress-network-dashboard {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.75rem;
+	padding: 2rem;
+
+	&__title {
+		margin: 0 0 1.5rem;
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: #1e293b;
+	}
+
+	&__metrics {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1rem;
+		margin-bottom: 2rem;
+
+		@media (max-width: 768px) {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		@media (max-width: 480px) {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	&__metric-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 1.25rem;
+		background: #f8fafc;
+		border-radius: 0.5rem;
+		border: 1px solid #e2e8f0;
+
+		&--alert {
+			border-color: #fbbf24;
+			background: #fffbeb;
+		}
+
+		&--warning {
+			border-color: #f87171;
+			background: #fef2f2;
+		}
+	}
+
+	&__metric-value {
+		font-size: 2rem;
+		font-weight: 700;
+		color: #6366f1;
+		line-height: 1;
+
+		.wp-block-gatherpress-network-dashboard__metric-card--alert & {
+			color: #d97706;
+		}
+
+		.wp-block-gatherpress-network-dashboard__metric-card--warning & {
+			color: #dc2626;
+		}
+	}
+
+	&__metric-label {
+		margin-top: 0.5rem;
+		font-size: 0.8125rem;
+		color: #64748b;
+		font-weight: 500;
+	}
+
+	&__section {
+		margin-bottom: 2rem;
+
+		h3 {
+			margin: 0 0 0.75rem;
+			font-size: 1.125rem;
+			font-weight: 600;
+			color: #1e293b;
+		}
+	}
+
+	&__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+
+		li {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			padding: 0.5rem 0;
+			border-bottom: 1px solid #f1f5f9;
+
+			a {
+				color: #1e293b;
+				text-decoration: none;
+
+				&:hover {
+					color: #6366f1;
+				}
+			}
+		}
+	}
+
+	&__badge {
+		display: inline-block;
+		padding: 0.125rem 0.5rem;
+		border-radius: 1rem;
+		font-size: 0.6875rem;
+		font-weight: 600;
+
+		&--dormant {
+			background: #fef2f2;
+			color: #dc2626;
+		}
+	}
+
+	&__action-links {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	&__action-link {
+		display: inline-block;
+		padding: 0.625rem 1.25rem;
+		background-color: #6366f1;
+		color: #fff !important;
+		border-radius: 0.5rem;
+		text-decoration: none;
+		font-size: 0.875rem;
+		font-weight: 600;
+
+		&:hover {
+			background-color: #4f46e5;
+		}
+	}
+}
