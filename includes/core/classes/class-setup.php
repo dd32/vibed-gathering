@@ -113,6 +113,7 @@ class Setup {
 		add_action( 'admin_init', array( $this, 'check_plugin_version' ) );
 		add_action( 'admin_init', array( $this, 'add_privacy_policy_content' ) );
 		add_action( 'admin_notices', array( $this, 'check_gatherpress_alpha' ) );
+		add_action( 'admin_notices', array( $this, 'check_multisite_activation' ) );
 		add_action( 'network_admin_notices', array( $this, 'check_gatherpress_alpha' ) );
 		add_action( 'wp_initialize_site', array( $this, 'on_site_create' ) );
 		add_action( 'send_headers', array( $this, 'smash_table' ) );
@@ -470,6 +471,41 @@ class Setup {
 
 		$this->add_online_event_term();
 		$this->schedule_rewrite_flush();
+	}
+
+	/**
+	 * Show an admin notice when on multisite but not network-activated.
+	 *
+	 * Group features (membership, directory, applications) require the plugin
+	 * to be network-activated so it runs on all sites.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function check_multisite_activation(): void {
+		if ( ! is_multisite() || ! current_user_can( 'manage_network_plugins' ) ) {
+			return;
+		}
+
+		// Check if network-activated by looking for the plugin in active_sitewide_plugins.
+		$gatherpress_network_plugins = get_site_option( 'active_sitewide_plugins', array() );
+		$gatherpress_plugin_file     = plugin_basename( GATHERPRESS_CORE_FILE );
+
+		if ( isset( $gatherpress_network_plugins[ $gatherpress_plugin_file ] ) ) {
+			return;
+		}
+
+		wp_admin_notice(
+			__(
+				'GatherPress is active on this site but not network-activated. For group features (membership, directory, applications) to work across all sites, please network-activate the plugin from the Network Admin → Plugins page.',
+				'gatherpress'
+			),
+			array(
+				'type'        => 'info',
+				'dismissible' => true,
+			)
+		);
 	}
 
 	/**
