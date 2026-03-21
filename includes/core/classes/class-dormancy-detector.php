@@ -91,6 +91,11 @@ class Dormancy_Detector {
 	 * @return void
 	 */
 	public function schedule_cron(): void {
+		// Only schedule on the main site to avoid redundant cron on every group site.
+		if ( is_multisite() && ! is_main_site() ) {
+			return;
+		}
+
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time(), 'daily', self::CRON_HOOK );
 		}
