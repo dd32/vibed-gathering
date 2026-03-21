@@ -194,6 +194,22 @@ class Group_Setup {
 		update_option( Group::OPTION_LOCATION, '' );
 		update_option( Group::OPTION_LINKS, '' );
 
+		// Create default event categories (topics).
+		$gatherpress_categories = array(
+			__( 'In-Person', 'gatherpress' ),
+			__( 'Online', 'gatherpress' ),
+			__( 'Hybrid', 'gatherpress' ),
+			__( 'Workshop', 'gatherpress' ),
+			__( 'Presentation', 'gatherpress' ),
+			__( 'Social', 'gatherpress' ),
+		);
+
+		foreach ( $gatherpress_categories as $gatherpress_cat ) {
+			if ( ! term_exists( $gatherpress_cat, 'gatherpress_topic' ) ) {
+				wp_insert_term( $gatherpress_cat, 'gatherpress_topic' );
+			}
+		}
+
 		restore_current_blog();
 	}
 
