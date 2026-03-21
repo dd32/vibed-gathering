@@ -2,7 +2,8 @@
  * Front-end interactivity for the Join Group Button block.
  *
  * Handles join/leave group actions via the GatherPress REST API
- * without requiring a full page reload.
+ * without requiring a full page reload. Uses native fetch() since
+ * this runs as a viewScriptModule where wp.apiFetch is unavailable.
  */
 
 /**
@@ -35,39 +36,43 @@ async function handleButtonClick(event) {
 		return;
 	}
 
+	// Confirm leave action.
+	if (action === 'leave') {
+		const confirmed = window.confirm(
+			'Are you sure you want to leave this group?'
+		);
+		if (!confirmed) {
+			return;
+		}
+	}
+
 	// Disable button and show loading state.
 	button.disabled = true;
 	const originalText = button.textContent;
-	button.textContent =
-		action === 'join'
-			? wp.i18n.__('Joining...', 'gatherpress')
-			: wp.i18n.__('Leaving...', 'gatherpress');
+	button.textContent = action === 'join' ? 'Joining...' : 'Leaving...';
 
 	try {
-		// Get a fresh nonce.
-		const nonceResponse = await wp.apiFetch({
-			path: '/gatherpress/v1/event/nonce',
-		});
-
 		const endpoint =
 			action === 'join'
-				? '/gatherpress/v1/group/join'
-				: '/gatherpress/v1/group/leave';
+				? '/wp-json/gatherpress/v1/group/join'
+				: '/wp-json/gatherpress/v1/group/leave';
 
-		const response = await wp.apiFetch({
-			path: endpoint,
+		const response = await fetch(endpoint, {
 			method: 'POST',
-			data: { blog_id: parseInt(blogId, 10) },
 			headers: {
-				'X-WP-Nonce': nonceResponse.nonce,
+				'Content-Type': 'application/json',
+				'X-WP-Nonce': getRestNonce(),
 			},
+			body: JSON.stringify({ blog_id: parseInt(blogId, 10) }),
 		});
 
-		if (response.success) {
+		const data = await response.json();
+
+		if (data.success) {
 			// Reload to show updated state.
 			window.location.reload();
 		} else {
-			throw new Error(response.message || 'Unknown error');
+			throw new Error(data.message || 'Action failed.');
 		}
 	} catch (error) {
 		// Restore button state on error.
@@ -84,6 +89,26 @@ async function handleButtonClick(event) {
 
 		setTimeout(() => errorEl.remove(), 5000);
 	}
+}
+
+/**
+ * Get the WordPress REST nonce from the page.
+ *
+ * @return {string} The nonce value.
+ */
+function getRestNonce() {
+	// Try wpApiSettings (enqueued by WordPress when user is logged in).
+	if (window.wpApiSettings?.nonce) {
+		return window.wpApiSettings.nonce;
+	}
+
+	// Fallback: look for a nonce in a meta tag or hidden input.
+	const nonceEl = document.querySelector('#_wpnonce, [name="_wpnonce"]');
+	if (nonceEl) {
+		return nonceEl.value || nonceEl.getAttribute('content') || '';
+	}
+
+	return '';
 }
 
 // Initialize when DOM is ready.

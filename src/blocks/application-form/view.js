@@ -1,7 +1,8 @@
 /**
  * Front-end interactivity for the Group Application Form block.
  *
- * Handles form submission via the GatherPress REST API.
+ * Handles form submission via native fetch() since this runs as a
+ * viewScriptModule where wp.apiFetch is unavailable.
  */
 
 /**
@@ -45,48 +46,58 @@ async function handleFormSubmit(event) {
 
 	// Show loading state.
 	submitBtn.disabled = true;
-	submitBtn.textContent = wp.i18n.__('Submitting...', 'gatherpress');
+	submitBtn.textContent = 'Submitting...';
 	messageEl.hidden = true;
 
 	try {
-		const response = await wp.apiFetch({
-			path: '/gatherpress/v1/group-application/submit',
-			method: 'POST',
-			data,
-		});
+		// Get nonce from the form's hidden field.
+		const nonce = formData.get('_wpnonce') || '';
 
-		// Show success message.
-		messageEl.className =
-			'wp-block-gatherpress-application-form__message wp-block-gatherpress-application-form__message--success';
-		messageEl.textContent =
-			response.message ||
-			wp.i18n.__(
-				'Your application has been submitted!',
-				'gatherpress'
-			);
-		messageEl.hidden = false;
-
-		// Disable the form.
-		form.querySelectorAll('input, textarea, select, button').forEach(
-			(el) => {
-				el.disabled = true;
+		const response = await fetch(
+			'/wp-json/gatherpress/v1/group-application/submit',
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': nonce,
+				},
+				body: JSON.stringify(data),
 			}
 		);
+
+		const result = await response.json();
+
+		if (response.ok && result.success !== false) {
+			// Show success message.
+			messageEl.className =
+				'wp-block-gatherpress-application-form__message wp-block-gatherpress-application-form__message--success';
+			messageEl.textContent =
+				result.message ||
+				'Your application has been submitted!';
+			messageEl.hidden = false;
+
+			// Disable the form.
+			form.querySelectorAll(
+				'input, textarea, select, button'
+			).forEach((el) => {
+				el.disabled = true;
+			});
+		} else {
+			throw new Error(
+				result.message || 'Submission failed.'
+			);
+		}
 	} catch (error) {
 		// Show error message.
 		messageEl.className =
 			'wp-block-gatherpress-application-form__message wp-block-gatherpress-application-form__message--error';
 		messageEl.textContent =
-			error.message ||
-			wp.i18n.__('Something went wrong.', 'gatherpress');
+			error.message || 'Something went wrong.';
 		messageEl.hidden = false;
 
 		// Restore button.
 		submitBtn.disabled = false;
-		submitBtn.textContent = wp.i18n.__(
-			'Submit Application',
-			'gatherpress'
-		);
+		submitBtn.textContent = 'Submit Application';
 	}
 }
 

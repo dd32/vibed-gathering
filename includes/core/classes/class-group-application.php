@@ -132,7 +132,9 @@ class Group_Application {
 				'supports'        => array( 'title', 'editor', 'custom-fields' ),
 				'capability_type' => 'post',
 				'capabilities'    => array(
-					'create_posts' => 'read',
+					// Applications are created only via the REST API endpoint.
+					// Direct post creation is restricted to admins.
+					'create_posts' => 'manage_options',
 				),
 				'map_meta_cap'    => true,
 			)
