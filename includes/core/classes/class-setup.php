@@ -63,6 +63,7 @@ class Setup {
 		Feed::get_instance();
 		Event_Query::get_instance();
 		Event_Rest_Api::get_instance();
+		Dormancy_Detector::get_instance();
 		Email::get_instance();
 		Event_Discussion::get_instance();
 		Events_Feed_Api::get_instance();
@@ -74,6 +75,7 @@ class Setup {
 		Group_Setup::get_instance();
 		Export::get_instance();
 		Import::get_instance();
+		Location_Search::get_instance();
 		Meetup_Import::get_instance();
 		Member_Profile::get_instance();
 		Newcomer_Tracker::get_instance();
@@ -201,6 +203,7 @@ class Setup {
 	 */
 	public function deactivate_gatherpress_plugin(): void {
 		flush_rewrite_rules();
+		Dormancy_Detector::unschedule_cron();
 		Email::unschedule_reminder_cron();
 		Recurrence_Generator::unschedule_cron();
 	}
