@@ -290,6 +290,25 @@ class Group_Application {
 		$user_id    = get_current_user_id();
 		$group_name = $request->get_param( 'group_name' );
 
+		// Prevent duplicate applications — check if user already has a pending or under-review application.
+		$gatherpress_existing = get_posts(
+			array(
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => array( self::STATUS_PENDING, self::STATUS_REVIEW ),
+				'author'         => $user_id,
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+			)
+		);
+
+		if ( ! empty( $gatherpress_existing ) ) {
+			return new WP_Error(
+				'duplicate_application',
+				__( 'You already have a pending application. Please wait for it to be reviewed before submitting another.', 'gatherpress' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		// Create the application post.
 		$post_id = wp_insert_post(
 			array(
