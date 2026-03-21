@@ -36,11 +36,18 @@ async function handleButtonClick(event) {
 		return;
 	}
 
+	// Read translated strings from data attributes.
+	const i18nJoining = wrapper?.dataset.i18nJoining || 'Joining...';
+	const i18nLeaving = wrapper?.dataset.i18nLeaving || 'Leaving...';
+	const i18nConfirm =
+		wrapper?.dataset.i18nConfirmLeave ||
+		'Are you sure you want to leave this group?';
+	const i18nError =
+		wrapper?.dataset.i18nError || 'Something went wrong.';
+
 	// Confirm leave action.
 	if (action === 'leave') {
-		const confirmed = window.confirm(
-			'Are you sure you want to leave this group?'
-		);
+		const confirmed = window.confirm(i18nConfirm);
 		if (!confirmed) {
 			return;
 		}
@@ -49,7 +56,7 @@ async function handleButtonClick(event) {
 	// Disable button and show loading state.
 	button.disabled = true;
 	const originalText = button.textContent;
-	button.textContent = action === 'join' ? 'Joining...' : 'Leaving...';
+	button.textContent = action === 'join' ? i18nJoining : i18nLeaving;
 
 	try {
 		const endpoint =
@@ -83,7 +90,7 @@ async function handleButtonClick(event) {
 		const errorEl = document.createElement('span');
 		errorEl.className =
 			'wp-block-gatherpress-join-group-button__error';
-		errorEl.textContent = error.message || 'Something went wrong.';
+		errorEl.textContent = error.message || i18nError;
 		errorEl.setAttribute('role', 'alert');
 		wrapper.appendChild(errorEl);
 

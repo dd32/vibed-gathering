@@ -77,6 +77,7 @@ class Email {
 		add_action( self::DIGEST_CRON_HOOK, array( $this, 'send_weekly_digest' ) );
 		add_action( 'init', array( $this, 'schedule_reminder_cron' ) );
 		add_action( 'init', array( $this, 'schedule_digest_cron' ) );
+		add_filter( 'cron_schedules', array( $this, 'register_weekly_schedule' ) );
 		add_action( 'gatherpress_recurring_event_created', array( $this, 'notify_new_recurring_event' ), 10, 2 );
 	}
 
@@ -106,6 +107,28 @@ class Email {
 			$gatherpress_next_monday = strtotime( 'next Monday 9:00' );
 			wp_schedule_event( $gatherpress_next_monday, 'weekly', self::DIGEST_CRON_HOOK );
 		}
+	}
+
+	/**
+	 * Register the weekly cron schedule.
+	 *
+	 * WordPress core only provides hourly, twicedaily, and daily schedules.
+	 * This adds a weekly interval for the digest email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $gatherpress_schedules Existing cron schedules.
+	 * @return array Modified schedules with weekly added.
+	 */
+	public function register_weekly_schedule( array $gatherpress_schedules ): array {
+		if ( ! isset( $gatherpress_schedules['weekly'] ) ) {
+			$gatherpress_schedules['weekly'] = array(
+				'interval' => WEEK_IN_SECONDS,
+				'display'  => __( 'Once Weekly', 'gatherpress' ),
+			);
+		}
+
+		return $gatherpress_schedules;
 	}
 
 	/**

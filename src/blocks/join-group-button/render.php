@@ -29,7 +29,7 @@ $gatherpress_is_member    = $gatherpress_is_logged_in && $gatherpress_group->is_
 $gatherpress_member_count = $gatherpress_group->get_member_count();
 ?>
 
-<div <?php echo $gatherpress_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> data-blog-id="<?php echo esc_attr( (string) $gatherpress_blog_id ); ?>">
+<div <?php echo $gatherpress_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> data-blog-id="<?php echo esc_attr( (string) $gatherpress_blog_id ); ?>" data-i18n-joining="<?php esc_attr_e( 'Joining...', 'gatherpress' ); ?>" data-i18n-leaving="<?php esc_attr_e( 'Leaving...', 'gatherpress' ); ?>" data-i18n-confirm-leave="<?php esc_attr_e( 'Are you sure you want to leave this group?', 'gatherpress' ); ?>" data-i18n-error="<?php esc_attr_e( 'Something went wrong.', 'gatherpress' ); ?>">
 	<?php if ( ! $gatherpress_is_logged_in ) : ?>
 		<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wp-block-gatherpress-join-group-button__btn wp-block-gatherpress-join-group-button__btn--login">
 			<?php esc_html_e( 'Log in to Join', 'gatherpress' ); ?>

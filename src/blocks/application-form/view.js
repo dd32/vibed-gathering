@@ -44,9 +44,16 @@ async function handleFormSubmit(event) {
 		organizer_info: formData.get('organizer_info') || '',
 	};
 
+	// Read i18n strings from data attributes.
+	const i18nSubmitting = form.dataset.i18nSubmitting || 'Submitting...';
+	const i18nSubmit = form.dataset.i18nSubmit || 'Submit Application';
+	const i18nSuccess =
+		form.dataset.i18nSuccess || 'Your application has been submitted!';
+	const i18nError = form.dataset.i18nError || 'Something went wrong.';
+
 	// Show loading state.
 	submitBtn.disabled = true;
-	submitBtn.textContent = 'Submitting...';
+	submitBtn.textContent = i18nSubmitting;
 	messageEl.hidden = true;
 
 	try {
@@ -71,9 +78,7 @@ async function handleFormSubmit(event) {
 			// Show success message.
 			messageEl.className =
 				'wp-block-gatherpress-application-form__message wp-block-gatherpress-application-form__message--success';
-			messageEl.textContent =
-				result.message ||
-				'Your application has been submitted!';
+			messageEl.textContent = result.message || i18nSuccess;
 			messageEl.hidden = false;
 
 			// Disable the form.
@@ -91,13 +96,12 @@ async function handleFormSubmit(event) {
 		// Show error message.
 		messageEl.className =
 			'wp-block-gatherpress-application-form__message wp-block-gatherpress-application-form__message--error';
-		messageEl.textContent =
-			error.message || 'Something went wrong.';
+		messageEl.textContent = error.message || i18nError;
 		messageEl.hidden = false;
 
 		// Restore button.
 		submitBtn.disabled = false;
-		submitBtn.textContent = 'Submit Application';
+		submitBtn.textContent = i18nSubmit;
 	}
 }
 

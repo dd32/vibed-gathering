@@ -43,8 +43,8 @@ if ( is_multisite() ) {
 		switch_to_blog( $gatherpress_site_id );
 
 		if ( post_type_exists( Event::POST_TYPE ) ) {
-			$gatherpress_site_events  = gatherpress_get_directory_events( $gatherpress_site_id, $gatherpress_search );
-			$gatherpress_all_events   = array_merge( $gatherpress_all_events, $gatherpress_site_events );
+			$gatherpress_site_events = gatherpress_get_directory_events( $gatherpress_site_id, $gatherpress_search );
+			$gatherpress_all_events  = array_merge( $gatherpress_all_events, $gatherpress_site_events );
 		}
 
 		restore_current_blog();
@@ -154,64 +154,67 @@ $gatherpress_wrapper = get_block_wrapper_attributes(
  * @param string $gatherpress_search  Optional search term.
  * @return array Array of event data.
  */
-function gatherpress_get_directory_events( int $gatherpress_site_id, string $gatherpress_search = '' ): array {
-	$gatherpress_events = array();
+if ( ! function_exists( 'gatherpress_get_directory_events' ) ) :
+	// phpcs:ignore Squiz.Commenting.FunctionComment.Missing -- Doc comment is above the function_exists guard.
+	function gatherpress_get_directory_events( int $gatherpress_site_id, string $gatherpress_search = '' ): array {
+		$gatherpress_events = array();
 
-	$gatherpress_query_args = array(
-		'post_type'      => Event::POST_TYPE,
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-			array(
-				'key'     => 'gatherpress_datetime_end_gmt',
-				'value'   => gmdate( Event::DATETIME_FORMAT ),
-				'compare' => '>=',
-				'type'    => 'DATETIME',
+		$gatherpress_query_args = array(
+			'post_type'      => Event::POST_TYPE,
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'key'     => 'gatherpress_datetime_end_gmt',
+					'value'   => gmdate( Event::DATETIME_FORMAT ),
+					'compare' => '>=',
+					'type'    => 'DATETIME',
+				),
 			),
-		),
-		'meta_key'       => 'gatherpress_datetime_start_gmt', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-		'orderby'        => 'meta_value',
-		'order'          => 'ASC',
-	);
-
-	if ( ! empty( $gatherpress_search ) ) {
-		$gatherpress_query_args['s'] = $gatherpress_search;
-	}
-
-	$gatherpress_query   = new WP_Query( $gatherpress_query_args );
-	$gatherpress_blog    = get_blog_details( $gatherpress_site_id );
-	$gatherpress_grp_name = $gatherpress_blog ? $gatherpress_blog->blogname : '';
-
-	foreach ( $gatherpress_query->posts as $gatherpress_post ) {
-		if ( Event_Status::is_cancelled( $gatherpress_post->ID ) ) {
-			continue;
-		}
-
-		$gatherpress_event    = new \GatherPress\Core\Event( $gatherpress_post->ID );
-		$gatherpress_datetime = $gatherpress_event->get_datetime();
-		$gatherpress_venue    = $gatherpress_event->get_venue_information();
-		$gatherpress_start    = $gatherpress_datetime['datetime_start_gmt'] ?? '';
-		$gatherpress_month    = '';
-		$gatherpress_day      = '';
-
-		if ( ! empty( $gatherpress_start ) && '0000-00-00 00:00:00' !== $gatherpress_start ) {
-			$gatherpress_dt    = new DateTime( $gatherpress_start, new DateTimeZone( 'UTC' ) );
-			$gatherpress_month = $gatherpress_dt->format( 'M' );
-			$gatherpress_day   = $gatherpress_dt->format( 'j' );
-		}
-
-		$gatherpress_events[] = array(
-			'title'            => get_the_title( $gatherpress_post->ID ),
-			'permalink'        => get_permalink( $gatherpress_post->ID ),
-			'thumbnail'        => get_the_post_thumbnail_url( $gatherpress_post->ID, 'medium' ),
-			'datetime_display' => $gatherpress_event->get_display_datetime(),
-			'start_gmt'        => $gatherpress_start,
-			'month'            => $gatherpress_month,
-			'day'              => $gatherpress_day,
-			'venue'            => $gatherpress_venue['name'] ?? '',
-			'group_name'       => $gatherpress_grp_name,
+			'meta_key'       => 'gatherpress_datetime_start_gmt', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		'orderby'            => 'meta_value',
+		'order'              => 'ASC',
 		);
-	}
 
-	return $gatherpress_events;
-}
+		if ( ! empty( $gatherpress_search ) ) {
+			$gatherpress_query_args['s'] = $gatherpress_search;
+		}
+
+		$gatherpress_query    = new WP_Query( $gatherpress_query_args );
+		$gatherpress_blog     = get_blog_details( $gatherpress_site_id );
+		$gatherpress_grp_name = $gatherpress_blog ? $gatherpress_blog->blogname : '';
+
+		foreach ( $gatherpress_query->posts as $gatherpress_post ) {
+			if ( Event_Status::is_cancelled( $gatherpress_post->ID ) ) {
+				continue;
+			}
+
+			$gatherpress_event    = new \GatherPress\Core\Event( $gatherpress_post->ID );
+			$gatherpress_datetime = $gatherpress_event->get_datetime();
+			$gatherpress_venue    = $gatherpress_event->get_venue_information();
+			$gatherpress_start    = $gatherpress_datetime['datetime_start_gmt'] ?? '';
+			$gatherpress_month    = '';
+			$gatherpress_day      = '';
+
+			if ( ! empty( $gatherpress_start ) && '0000-00-00 00:00:00' !== $gatherpress_start ) {
+				$gatherpress_dt    = new DateTime( $gatherpress_start, new DateTimeZone( 'UTC' ) );
+				$gatherpress_month = $gatherpress_dt->format( 'M' );
+				$gatherpress_day   = $gatherpress_dt->format( 'j' );
+			}
+
+			$gatherpress_events[] = array(
+				'title'            => get_the_title( $gatherpress_post->ID ),
+				'permalink'        => get_permalink( $gatherpress_post->ID ),
+				'thumbnail'        => get_the_post_thumbnail_url( $gatherpress_post->ID, 'medium' ),
+				'datetime_display' => $gatherpress_event->get_display_datetime(),
+				'start_gmt'        => $gatherpress_start,
+				'month'            => $gatherpress_month,
+				'day'              => $gatherpress_day,
+				'venue'            => $gatherpress_venue['name'] ?? '',
+				'group_name'       => $gatherpress_grp_name,
+			);
+		}
+
+		return $gatherpress_events;
+	}
+endif;

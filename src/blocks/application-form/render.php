@@ -39,7 +39,7 @@ $gatherpress_wrapper = get_block_wrapper_attributes(
 			<?php esc_html_e( 'Fill out this form to apply for a new community group. Applications are reviewed by administrators.', 'gatherpress' ); ?>
 		</p>
 
-		<form class="wp-block-gatherpress-application-form__form" data-gp-application-form>
+		<form class="wp-block-gatherpress-application-form__form" data-gp-application-form data-i18n-submitting="<?php esc_attr_e( 'Submitting...', 'gatherpress' ); ?>" data-i18n-submit="<?php esc_attr_e( 'Submit Application', 'gatherpress' ); ?>" data-i18n-success="<?php esc_attr_e( 'Your application has been submitted!', 'gatherpress' ); ?>" data-i18n-error="<?php esc_attr_e( 'Something went wrong.', 'gatherpress' ); ?>">
 			<?php wp_nonce_field( 'wp_rest', '_wpnonce' ); ?>
 
 			<div class="wp-block-gatherpress-application-form__field">
