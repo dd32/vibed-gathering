@@ -73,6 +73,7 @@ class Setup {
 		Group_Setup::get_instance();
 		Export::get_instance();
 		Import::get_instance();
+		Meetup_Import::get_instance();
 		Member_Profile::get_instance();
 		Newcomer_Tracker::get_instance();
 		Recurrence_Generator::get_instance();
